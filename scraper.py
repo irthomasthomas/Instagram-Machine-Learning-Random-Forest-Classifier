@@ -11,8 +11,8 @@ import random
 import requests
 import requests.utils
 import json
-import sqlite3
 import time
+from DB import Database
 
 def default_user_agent() -> str:
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
@@ -48,18 +48,20 @@ class InstaloaderTommy(Instaloader):
                 update_end_cursor(end_cursor,hashtag, has_next_page)
             else:
                 update_end_cursor("",hashtag,0)
-
+    
+    """ 
     def download_pic(self, filename: str, url: str, mtime: datetime, filename_suffix: Optional[str] = None) -> bool:
         return True
-    
-    def download_profilepic(self, name: str, url: str) -> None:
-        if download_profilepic:
-            super().download_profilepic(name, url)
-
-    def check_profile_id(self, profile: str, profile_metadata: Optional[Dict[str, Any]] = None) -> Tuple[str, int]:
-        if track_profile_id:
-            return super().check_profile_id(profile, profile_metadata)
-        return profile, 0
+        
+        def download_profilepic(self, name: str, url: str) -> None:
+            if download_profilepic:
+                super().download_profilepic(name, url)
+        
+        def check_profile_id(self, profile: str, profile_metadata: Optional[Dict[str, Any]] = None) -> Tuple[str, int]:
+            if track_profile_id:
+                return super().check_profile_id(profile, profile_metadata)
+            return profile, 0
+        """
     
     @contextmanager
     def anonymous_copy(self):
@@ -188,15 +190,16 @@ class InstaloaderContextTommy(InstaloaderContext):
             except KeyboardInterrupt:
                 self.error("[skipped by user]", repeat_at_end=False)
                 raise ConnectionException(error_string) from err
-
+   
+    """ 
     def get_raw(self, url: str, _attempt=1) -> requests.Response:
-        """Downloads a file anonymously.
+        Downloads a file anonymously.
 
         :raises QueryReturnedNotFoundException: When the server responds with a 404.
         :raises QueryReturnedForbiddenException: When the server responds with a 403.
         :raises ConnectionException: When download failed.
 
-        .. versionadded:: 4.2.1"""
+        .. versionadded:: 4.2.1
         print("GET RAW...")
         time.sleep(4)
         
@@ -214,6 +217,7 @@ class InstaloaderContextTommy(InstaloaderContext):
                 # 404 not worth retrying.
                 raise QueryReturnedNotFoundException("404 when accessing {}.".format(url))
             raise ConnectionException("HTTP error code {}.".format(resp.status_code))
+    """
 
 class InstaDB:
     def __init__(self):
@@ -260,7 +264,7 @@ def update_end_cursor(end_cursor,hashtag,has_next_page):
         
     sql = """ REPLACE INTO scraper_status(end_cursor,hashtag,has_next_page,update_date)
                 VALUES(?,?,?,?) """
-    with InstaDB() as db:
+    with Database("instagram.sqlite3") as db:
         db.execute(sql,inputs)
     
 def get_end_cursor(hashtag):
@@ -268,7 +272,7 @@ def get_end_cursor(hashtag):
             FROM scraper_status 
             WHERE hashtag = ? 
             LIMIT 1 """
-    with InstaDB() as db:
+    with Database("instagram.sqlite3") as db:
         db.execute(sql,(hashtag,))
         end_cursor = db.fetchone()
     return end_cursor[0]
@@ -281,7 +285,7 @@ def dump_page_json(filename,page,dir):
             json.dump(page, fp=fp, indent=4, sort_keys=True) 
 
 def get_proxy_db():
-    with InstaDB() as db:
+    with Database("instagram.sqlite3") as db:
         sql = ("""SELECT ip 
             from proxy limit 20 """)
         db.execute(sql)
@@ -340,11 +344,11 @@ proxylist = []
 with open("goodproxies.json","r") as file:   
     proxylist = json.load(file)
 
-with InstaDB() as db:
-    hashtags = db.query('SELECT tag FROM hashtag limit 10')
-    # proxies = db.query('SELECT ip FROM proxy limit 100')
-    print(str(hashtags))
-    # print(str(proxies))
+# with Database("instagram.sqlite3") as db:
+#     hashtags = db.query('SELECT tag FROM hashtag limit 10')
+#     # proxies = db.query('SELECT ip FROM proxy limit 100')
+#     print(str(hashtags))
+#     # print(str(proxies))
 
 # end_cursor = get_end_cursor("cardiff")
 # update_end_cursor(end_cursor,"cardiff",True)
@@ -353,6 +357,6 @@ session = requests.session()
 
 scraper = InstaloaderTommy()
 with scraper:
-    tags = scraper.get_hashtag_posts("artforsale",proxylist,resume=False)
+    tags = scraper.get_hashtag_posts("classicalmusician",proxylist,resume=False)
 
 #L.main()
