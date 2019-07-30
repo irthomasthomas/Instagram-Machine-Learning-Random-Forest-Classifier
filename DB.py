@@ -25,6 +25,7 @@ class Database:
     
     def execmany(self, sql, params):
         print(sql)
+        print(str(params))
         self.cursor.executemany(sql, params or ())
 
     def execute(self, sql, params=None):

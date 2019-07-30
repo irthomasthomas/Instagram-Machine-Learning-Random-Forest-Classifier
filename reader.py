@@ -3,7 +3,10 @@ from contextlib import contextmanager
 from instaloader import Instaloader
 from instaloader import InstaloaderContext, Post
 from instaloader.exceptions import *
+from instaloader.structures import (Highlight, JsonExportable, Post, PostLocation, Profile, Story, StoryItem,
+                         save_structure_to_file, load_structure_from_file, PostComment, PostCommentAnswer)
 import os
+import sys
 from datetime import datetime
 from typing import Any, Callable, Dict, Tuple, Iterator, List, Optional, Union
 
@@ -74,7 +77,7 @@ class InstaloaderTommy(Instaloader):
         yield new_loader
         self.error_log.extend(new_loader.error_log)
         self.previous_queries = new_loader.previous_queries
-
+ 
 class InstaloaderContextTommy(InstaloaderContext):
     default_user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
@@ -219,31 +222,6 @@ class InstaloaderContextTommy(InstaloaderContext):
             raise ConnectionException("HTTP error code {}.".format(resp.status_code))
     """
 
-def update_end_cursor(end_cursor,hashtag,has_next_page):
-    inputs = (end_cursor,hashtag,has_next_page,datetime.now())
-        
-    sql = """ REPLACE INTO scraper_status(end_cursor,hashtag,has_next_page,update_date)
-                VALUES(?,?,?,?) """
-    with Database("instagram.sqlite3") as db:
-        db.execute(sql,inputs)
-    
-def get_end_cursor(hashtag):
-    sql = """ SELECT end_cursor 
-            FROM scraper_status 
-            WHERE hashtag = ? 
-            LIMIT 1 """
-    with Database("instagram.sqlite3") as db:
-        db.execute(sql,(hashtag,))
-        end_cursor = db.fetchone()
-    return end_cursor[0]
-
-def dump_page_json(filename,page,dir):
-        print("dump_page_json: "+str(filename)+" "+str(dir))
-        filename = dir + '/' + filename+".json"
-        os.makedirs(dir, exist_ok=True)        
-        with open(filename, 'wt') as fp:
-            json.dump(page, fp=fp, indent=4, sort_keys=True) 
-
 def get_proxy_db():
     with Database("instagram.sqlite3") as db:
         sql = ("""SELECT ip 
@@ -300,6 +278,24 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     
+def load_from_files(path, start_tag):
+    print("hello")
+    for file in os.scandir(path):
+        with open(file, 'r') as fp:
+            f = fp.read()
+            resp_json = json.loads(f)
+            yield from (Post(L.context, edge['node']) for edge in resp_json['edges'])
+        
+
+"""     for file in os.scandir(path):
+        print(str(file))
+        with open(file, 'r') as fp:
+            print(str(fp))
+            resp_json = fp.read.json()
+            print(str(resp_json))
+            yield from (Post(L.context, edge['node']) for edge in resp_json['edges'])
+            post = load_structure_from_file(L.context, file.path)
+ """
 proxylist = []
 with open("goodproxies.json","r") as file:   
     proxylist = json.load(file)
@@ -310,13 +306,20 @@ with open("goodproxies.json","r") as file:
 #     print(str(hashtags))
 #     # print(str(proxies))
 
-# end_cursor = get_end_cursor("cardiff")
-# update_end_cursor(end_cursor,"cardiff",True)
+L = InstaloaderTommy()
+sql = """ INSERT OR IGNORE INTO post(id, date_utc)
+                                VALUES(?,?)
+                                """
 
-session = requests.session()
-
-scraper = InstaloaderTommy()
-with scraper:
-    tags = scraper.get_hashtag_posts("classicalmusician",proxylist,resume=False)
-
-#L.main()
+if len(sys.argv) >= 1:
+    path=sys.argv[1]
+    start_tag = sys.argv[2]
+if os.path.isdir(path):
+    print(str(path))
+    with Database("instagram.sqlite3") as db:
+        for post in load_from_files(path,start_tag):
+            values = (post.mediaid, post.date_utc)
+            r = db.execmany(sql,values)
+            print(str(r))
+            # print(str(post))
+            # print(str(post.caption))
