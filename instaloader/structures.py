@@ -330,6 +330,7 @@ class Post:
             return self._field('edge_media_to_comment', 'count')
 
     def get_comments(self) -> Iterator[PostComment]:
+        print("get_comments")
         r"""Iterate over all comments of the post.
 
         Each comment is represented by a PostComment namedtuple with fields text (string), created_at (datetime),
