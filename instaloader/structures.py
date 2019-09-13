@@ -129,6 +129,7 @@ class Post:
         return hash(self.shortcode)
 
     def _obtain_metadata(self):
+        print("lib: _obtain_metadata")
         if not self._full_metadata_dict:
             pic_json = self._context.get_json("p/{0}/".format(self.shortcode), params={})
             self._full_metadata_dict = pic_json['entry_data']['PostPage'][0]['graphql']['shortcode_media']
@@ -139,6 +140,7 @@ class Post:
 
     @property
     def _full_metadata(self) -> Dict[str, Any]:
+        print("lib: full_metadata")
         self._obtain_metadata()
         assert self._full_metadata_dict is not None
         return self._full_metadata_dict
@@ -189,6 +191,7 @@ class Post:
     @property
     def date_local(self) -> datetime:
         """Timestamp when the post was created (local time zone)."""
+        print("lib: date_local")
         return datetime.fromtimestamp(self._node["date"]
                                       if "date" in self._node
                                       else self._node["taken_at_timestamp"])
@@ -196,6 +199,7 @@ class Post:
     @property
     def date_utc(self) -> datetime:
         """Timestamp when the post was created (UTC)."""
+        print("lib: date_utc")
         return datetime.utcfromtimestamp(self._node["date"]
                                          if "date" in self._node
                                          else self._node["taken_at_timestamp"])
@@ -232,6 +236,7 @@ class Post:
     @property
     def caption(self) -> Optional[str]:
         """Caption."""
+        print("lib: caption")
         if "edge_media_to_caption" in self._node and self._node["edge_media_to_caption"]["edges"]:
             return self._node["edge_media_to_caption"]["edges"][0]["node"]["text"]
         elif "caption" in self._node:
@@ -241,6 +246,7 @@ class Post:
     @property
     def caption_hashtags(self) -> List[str]:
         """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
+        print("lib: caption_hashtags")
         if not self.caption:
             return []
         # This regular expression is from jStassen, adjusted to use Python's \w to support Unicode
@@ -263,6 +269,7 @@ class Post:
         """Printable caption, useful as a format specifier for --filename-pattern.
 
         .. versionadded:: 4.2.6"""
+        print("lib: Pcaption")
         def _elliptify(caption):
             pcaption = ' '.join([s.replace('/', '\u2215') for s in caption.splitlines() if s]).strip()
             return (pcaption[:30] + u"\u2026") if len(pcaption) > 31 else pcaption
@@ -514,6 +521,7 @@ class Profile:
         return json_node
 
     def _obtain_metadata(self):
+        print("struct: _obtain_metadata")
         try:
             if not self._has_full_metadata:
                 metadata = self._context.get_json('{}/'.format(self.username), params={})
