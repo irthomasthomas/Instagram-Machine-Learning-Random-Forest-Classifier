@@ -74,6 +74,7 @@ class InstaloaderContext:
 
     @contextmanager
     def anonymous_copy(self):
+        print("lib: anonymous_copy")
         session = self._session
         username = self.username
         self._session = self.get_anonymous_session()
@@ -130,6 +131,7 @@ class InstaloaderContext:
 
     def _default_http_header(self, empty_session_only: bool = False) -> Dict[str, str]:
         """Returns default HTTP header we use for requests."""
+        print("lib: default_http_header")
         header = {'Accept-Encoding': 'gzip, deflate',
                   'Accept-Language': 'en-US,en;q=0.8',
                   'Connection': 'keep-alive',
@@ -150,6 +152,7 @@ class InstaloaderContext:
 
     def get_anonymous_session(self) -> requests.Session:
         """Returns our default anonymous requests.Session object."""
+        print("lib_GET_ANONYMOUS_SESSION")
         session = requests.Session()
         session.cookies.update({'sessionid': '', 'mid': '', 'ig_pr': '1',
                                 'ig_vw': '1920', 'csrftoken': '',
@@ -158,11 +161,13 @@ class InstaloaderContext:
         return session
 
     def save_session_to_file(self, sessionfile):
+        print("lib: save_session_fo_file")
         """Not meant to be used directly, use :meth:`Instaloader.save_session_to_file`."""
         pickle.dump(requests.utils.dict_from_cookiejar(self._session.cookies), sessionfile)
 
     def load_session_from_file(self, username, sessionfile):
         """Not meant to be used directly, use :meth:`Instaloader.load_session_from_file`."""
+        print("lib: load_session_from_file")
         session = requests.Session()
         session.cookies = requests.utils.cookiejar_from_dict(pickle.load(sessionfile))
         session.headers.update(self._default_http_header())
@@ -184,6 +189,7 @@ class InstaloaderContext:
         :raises TwoFactorAuthRequiredException: First step of 2FA login done, now call
            :meth:`Instaloader.two_factor_login`."""
         import http.client
+        print("lib: login ")
         # pylint:disable=protected-access
         http.client._MAXHEADERS = 200
         session = requests.Session()
@@ -268,6 +274,7 @@ class InstaloaderContext:
 
     def _dump_query_timestamps(self, current_time: float):
         """Output the number of GraphQL queries grouped by their query_hash within the last time."""
+        print("lib: _dump_query_timestamps")
         windows = [10, 11, 15, 20, 30, 60]
         print("GraphQL requests:", file=sys.stderr)
         for query_hash, times in self._graphql_query_timestamps.items():
@@ -278,6 +285,7 @@ class InstaloaderContext:
 
     def _graphql_request_count_per_sliding_window(self, query_hash: str) -> int:
         """Return how many GraphQL requests can be done within the sliding window."""
+        print("lib: _graphql_req_count")
         if self.is_logged_in:
             max_reqs = {'1cb6ec562846122743b61e492c85999f': 20, '33ba35852cb50da46f5b5e889df7d159': 20, 'iphone': 100}
         else:
@@ -286,6 +294,8 @@ class InstaloaderContext:
 
     def _graphql_query_waittime(self, query_hash: str, current_time: float, untracked_queries: bool = False) -> float:
         """Calculate time needed to wait before GraphQL query can be executed."""
+        print("lib: graphql_waittime")
+
         sliding_window = 660
         if query_hash not in self._graphql_query_timestamps:
             self._graphql_query_timestamps[query_hash] = []
@@ -307,6 +317,7 @@ class InstaloaderContext:
         :param query_hash: The query_hash parameter of the query.
         :param untracked_queries: True, if 429 has been returned to apply 429 logic.
         """
+        print("lib: ratecontrol_graphql")
         if not untracked_queries:
             waittime = self._graphql_query_waittime(query_hash, time.monotonic(), untracked_queries)
             assert waittime >= 0
@@ -345,6 +356,7 @@ class InstaloaderContext:
         :raises QueryReturnedNotFoundException: When the server responds with a 404.
         :raises ConnectionException: When query repeatedly failed.
         """
+        print("lib: get_json")
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
         is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
@@ -412,6 +424,7 @@ class InstaloaderContext:
         :param rhx_gis: 'rhx_gis' variable as somewhere returned by Instagram, needed to 'sign' request
         :return: The server's response dictionary.
         """
+        print("lib: GRAPHQL QUERY")
         with copy_session(self._session) as tmpsession:
             tmpsession.headers.update(self._default_http_header(empty_session_only=True))
             del tmpsession.headers['Connection']
@@ -444,8 +457,9 @@ class InstaloaderContext:
                           rhx_gis: Optional[str] = None,
                           first_data: Optional[Dict[str, Any]] = None) -> Iterator[Dict[str, Any]]:
         """Retrieve a list of GraphQL nodes."""
-
+        print("graphql_node_list")            
         def _query():
+            print("graphql_node_list_query")            
             query_variables['first'] = self._graphql_page_length
             try:
                 return edge_extractor(self.graphql_query(query_hash, query_variables, query_referer, rhx_gis))
@@ -480,6 +494,7 @@ class InstaloaderContext:
         :raises ConnectionException: When query repeatedly failed.
 
         .. versionadded:: 4.2.1"""
+        print("lib: get_iphone_json")
         with copy_session(self._session) as tempsession:
             tempsession.headers['User-Agent'] = 'Instagram 10.3.2 (iPhone7,2; iPhone OS 9_3_3; en_US; en-US; ' \
                                                 'scale=2.00; 750x1334) AppleWebKit/420+'
@@ -506,6 +521,7 @@ class InstaloaderContext:
         :raises ConnectionException: When download failed.
 
         .. versionadded:: 4.2.1"""
+        print("GET_RAW")
         with self.get_anonymous_session() as anonymous_session:
             resp = anonymous_session.get(url, stream=True)
         if resp.status_code == 200:
@@ -531,6 +547,7 @@ class InstaloaderContext:
     @property
     def root_rhx_gis(self) -> Optional[str]:
         """rhx_gis string returned in the / query."""
+        print("lib: root_rhx_gis")
         if self.is_logged_in:
             # At the moment, rhx_gis seems to be required for anonymous requests only. By returning None when logged
             # in, we can save the root_rhx_gis lookup query.
