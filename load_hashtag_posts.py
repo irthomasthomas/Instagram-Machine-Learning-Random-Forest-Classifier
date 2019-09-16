@@ -23,30 +23,24 @@ import sys
 from prometheus_client import Counter, start_http_server
 
 from multiprocessing import Process, Queue, Manager, Pool
-from glob import glob
-import pathlib
-
 
 def default_user_agent() -> str:
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
            '(KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36'
 
-
 class InstaloaderTommy(Instaloader):
-
     def __init__(self):
         super().__init__('Instaloader')
         self.context = InstaloaderContextTommy()
-        self.download_comments = True
+        self.download_comments=True
 
     def update_comments(self, filename: str, post: Post) -> None:
         print("NEW update_comments")
-        def _postcommentanswer_asdict(comment, parentId):
+        def _postcommentanswer_asdict(comment,parentId):
             print("NEW _postcommentanswer")
             # update_comments_db(comment,post,parentId)
             return {'id': comment.id,
-                    'created_at': int(comment.created_at_utc.replace(
-                        tzinfo=timezone.utc).timestamp()),
+                    'created_at': int(comment.created_at_utc.replace(tzinfo=timezone.utc).timestamp()),
                     'text': comment.text,
                     'owner': comment.owner._asdict()}
 
@@ -383,6 +377,7 @@ def get_end_cursor(hashtag):
 
 def dump_page_json(filename,page,dir):
         print("dump_page_json: "+str(filename)+" "+str(dir))
+        print(str(page))
         filename = dir + '/' + filename+".json"
         os.makedirs(dir, exist_ok=True)        
         with open(filename, 'wt') as fp:
@@ -472,103 +467,17 @@ def save_to_file(data, filename: str) -> None:
     with lzma.open(filename, 'wt') as fp:
             json.dump(data, fp=fp, separators=(',', ':'))
 
-def multireplace(string, replacements):
-    """
-    Given a string and a replacement map, it returns the replaced string.
-    :param str string: string to execute replacements on
-    :param dict replacements: replacement dictionary {value to find: value to replace}
-    :rtype: str
-    """
-    # Place longer ones first to keep shorter substrings from matching where the longer ones should take place
-    # For instance given the replacements {'ab': 'AB', 'abc': 'ABC'} against the string 'hey abc', it should produce
-    # 'hey ABC' and not 'hey ABc'
-    # substrs = list(replacements, key=len, reverse=True)
-    substrs = sorted(replacements, key=len, reverse=True)
-
-    # Create a big OR regex that matches any of the substrings to replace
-    regexp = re.compile('|'.join(map(re.escape, substrs)),re.I)
-    
-
-    # For each match, look up the new string in the replacements
-    return regexp.sub(lambda match: replacements[match.group(0)], string)
-
-
-def extract_hashtags1(caption) -> List[str]:
-    """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
-    start = time.perf_counter()
-
-    rep = {}
-    hashtags = []
-    reps = []
-    tags = []
-    # if not self.caption:
-        # return []
-    # This regular expression is from jStassen, adjusted to use Python's \w to support Unicode
-    # http://blog.jstassen.com/2016/03/code-regex-for-instagram-username-and-hashtags/
-    # hashtag_regex = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    hashtag_regex = re.compile(r"(#\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    for tag in re.findall(hashtag_regex, caption.lower()):
-        hashtags.append(tag.strip('#'))
-        tags.append(tag)
-        reps.append("")
-        # rep[tag] = ""
-    for r in tags, reps:
-        caption = caption.replace(*r)
-    # rep = dict((re.escape(k), v) for k, v in rep.items()) 
-    # pattern = re.compile("|".join(rep.keys()),re.M)
-    # pattern = re.compile("|".join(rep.keys()))
-    # text = pattern.sub(lambda m: rep[re.escape(m.group(0))], caption)
-    
-    # text = multireplace(caption,rep)
-    print(caption)
-    print(hashtags)
-    end = time.perf_counter()
-    print("exctract func 1: " + str(end - start))
-    return hashtags
-
-
 def extract_hashtags(caption) -> List[str]:
     """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
-    start = time.perf_counter()
-    rep = {}
-    hashtags = []
-    reps = []
-    tags = []
+    print("exctract_hashtags")
     # if not self.caption:
         # return []
     # This regular expression is from jStassen, adjusted to use Python's \w to support Unicode
     # http://blog.jstassen.com/2016/03/code-regex-for-instagram-username-and-hashtags/
     hashtag_regex = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    result = re.findall(hashtag_regex, caption.lower())
-    result1 = result
-    # # hashtag_regex = re.compile(r"(#\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    for tag in result1:
-    #     # hashtags.append(tag)
-    #     hashtags.append(tag.strip('#').rstrip())
-        tags.append(tag.lower())
-        reps.append("")
-    #     # rep[tag] = ""
-    for r in tags, reps:
-        print(str(r))
-        caption = caption.replace(*r)
-  
-    # print(newcaption)
-    # print(hashtags)
-    # end = time.perf_counter()
-    # print("exctract func 1: " + str(end - start))
-    return result
+    return re.findall(hashtag_regex, caption.lower())
 
-def extract_hashtags_og(caption) -> List[str]:
-    """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
-    # if not self.caption:
-        # return []
-    # This regular expression is from jStassen, adjusted to use Python's \w to support Unicode
-    # http://blog.jstassen.com/2016/03/code-regex-for-instagram-username-and-hashtags/
-    hashtag_regex = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    result = re.findall(hashtag_regex, caption.lower())
-    return result
-
-def post_dict(edge):
+def post_dict(post):
         try:
             likes = edge['node']['edge_liked_by']['count']
         except:
@@ -601,62 +510,35 @@ def post_dict(edge):
         return {"likes": likes, "comments":comments,"caption":caption, 
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
     
-def starts(path):
-    c = 0
-    pipe = r.pipeline()
-    for page in load_posts_file_dir(path):
-        for edge in page['edges']:
-            post = post_dict(edge)
-            c += 1
-            try:
-                # if c < 7000:
-                #     print(c)
-                #     continue
-                # if c > 7800:
-                #     # pipe.execute()
-                #     print(c)
-                #     continue
-                id = edge['node']['id']
-                pipe.hmset("post:"+str(id),post)
-                if c > 800:
-                    responses = pipe.execute()
-                    time.sleep(0.5)
-                    c = 0
-                #     pipe.reset()
-            except:
-                continue
-        
-        
-                #     c = 0
-            #     hashtags = extract_hashtags_og(post['caption'])
-            #     # hashtags = extract_hashtags(post['caption'])
-            #     # print(hashtags)
-            #     # print(hashtags1)
-            #     # pipe.lpush("tags:"+str(id),*hashtags)
-            #     # if not r.exists("tags:"+str(id)):
-                # r.sadd("posttags:"+ str(id),*hashtags)
-                # for tag in hashtags:
-                #     r.sadd("posttags:"+id,tag)
-                #     r.sadd("tagposts:"+tag,id)
-                # # for tag in hashtags:
-                #     print(tag)
-           
-            # id = ""
-        # print("tm to fill pipe: " + str(time.perf_counter() - start))
-    pipe.execute()
-   
-start = time.perf_counter()
+def set_pipe(page,pipe):
+    for edge in page['edges']:
+        post = post_dict(edge)
+        try:
+            id = edge['node']['id']
+            print(str(id))
+        except:
+            print("id error")
+            continue
+        try:
+            pipe.hmset("post:"+str(id),post)
+            print("pipe ok")
+        except:
+            print("pipe error")
+
+tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+print("TOTAL MEM: " + str(tot_m))
+print("USED MEM: " + str(used_m))
+print("FREE_M: " + str(free_m))
 
 session = requests.session()
 scraper = InstaloaderTommy()
 commentCount = Counter('scraped_comments', 'Session Scraped Comments')
 hashtagPostCount = Counter('scraped_hashtag_posts', 'Session scraped hashtag posts')
-start_http_server(8080)
+# start_http_server(8080)
 
 if len(sys.argv) >= 1:
      path=sys.argv[1]
 #     start_tag = sys.argv[2]
-
 
 """ 
 with Manager() as manager:
@@ -670,44 +552,22 @@ with Manager() as manager:
     p.join()
     print("posts: " + str(len(posts)))
  """
-
 r = redis.Redis(host='localhost', port=6379, db=0)
 redis_key = "posts"
 processes = []
-
-subdirs = pathlib.Path(path).glob('*/')
-for i in subdirs:
-    if os.path.isdir(i):
-        p = Process(target=starts,args=(i,))
-        processes.append(p)
-        p.start()
-
-for proc in processes:
-    proc.join()
-
 posts2 = []
-# starts(path)
+pipe = r.pipeline()
+start = time.perf_counter()
+
+with scraper:
+    for count in scraper.get_hashtag_posts("headyart",resume=True):
+        print("COUNT")
+        print(str(count))
+        
         # if not r.exists(id):
+
 end = time.perf_counter()
 print("tm to exc pipe: " + str(end - start))
-
-
-# start = time.clock()
-# pool = Pool(50)
-# pipe = r.pipeline()
-# for page in load_posts_file_dir(path):
-#     p = Process(target=set_pipe,args=(page,pipe)) # goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
-#     p.start()
-#     p.join()
-#     # set_pipe(page, pipe)
-# print(time.clock() - start)
-
-# pipe.execute()
-# print(time.clock() - start)
-
-    # r.lpush(redis_key, json.dump(post))
-
-# yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
 
 """ 
 processes = []
@@ -744,8 +604,8 @@ print(shared_list)
 # yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
 
 """
+"""
 
-""" 
 if os.path.isdir(path):
     print(str(path))
     try:
@@ -768,4 +628,5 @@ if os.path.isdir(path):
     except KeyboardInterrupt:
         print("ctrl c")
         exit(0)
-"""
+           
+ """

@@ -25,7 +25,8 @@ from prometheus_client import Counter, start_http_server
 from multiprocessing import Process, Queue, Manager, Pool
 from glob import glob
 import pathlib
-
+import string
+import nltk
 
 def default_user_agent() -> str:
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
@@ -526,37 +527,33 @@ def extract_hashtags1(caption) -> List[str]:
     print("exctract func 1: " + str(end - start))
     return hashtags
 
-
 def extract_hashtags(caption) -> List[str]:
-    """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
-    start = time.perf_counter()
-    rep = {}
-    hashtags = []
-    reps = []
+    regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
     tags = []
-    # if not self.caption:
-        # return []
-    # This regular expression is from jStassen, adjusted to use Python's \w to support Unicode
-    # http://blog.jstassen.com/2016/03/code-regex-for-instagram-username-and-hashtags/
-    hashtag_regex = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    result = re.findall(hashtag_regex, caption.lower())
-    result1 = result
-    # # hashtag_regex = re.compile(r"(#\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    for tag in result1:
-    #     # hashtags.append(tag)
-    #     hashtags.append(tag.strip('#').rstrip())
-        tags.append(tag.lower())
-        reps.append("")
-    #     # rep[tag] = ""
-    for r in tags, reps:
-        print(str(r))
-        caption = caption.replace(*r)
-  
-    # print(newcaption)
-    # print(hashtags)
-    # end = time.perf_counter()
-    # print("exctract func 1: " + str(end - start))
-    return result
+
+    def repl(m):
+        tags.append(m.group(0))
+        return ""
+
+    caption = regexp.sub(repl, caption.lower())
+    return caption, tags
+
+def extract_mentions(caption) -> List[str]:
+    regexp = re.compile(r"(?:@)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
+    tags = []
+
+    def repl(m):
+        tags.append(m.group(0))
+        return ""
+
+    caption = regexp.sub(repl, caption.lower())
+    return caption, tags
+
+
+
+def remove_mentions(caption, regexp):
+    caption = regexp.sub("", caption)
+    return caption
 
 def extract_hashtags_og(caption) -> List[str]:
     """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
@@ -600,36 +597,79 @@ def post_dict(edge):
         scrape_date = time.time()
         return {"likes": likes, "comments":comments,"caption":caption, 
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
-    
+
+# self.sma = Caption(value=0.1, count=19)
+    # class Caption(object):
+    #     ''' Simple moving average '''
+    #     def __init__(self, value=0.0, count=7):
+    #         self.count = int(count)
+    #         self.current = float(value)
+    #         self.samples = [self.current] * self.count
+    #     def __init__(self, captionText):
+    #         self.captionText = captionText
+
+    #     def repl(x):
+    #         return x
+
+    #     ################
+    #     def replace4( sentences ):
+    #     pd = patterns_dict.get
+    #     def repl(m):
+    #         w = m.group()
+    #         return pd(w,w)
+
+    #     for n, sentence in enumerate( sentences ):
+    #         sentence = re.sub(r"\w+", repl, sentence)
+
+    #     #################
+
+def remove_punct(text):
+    regex = re.compile('[%s]' % re.escape(string.punctuation))
+    return regex.sub('', text)
+    # text = "".join([char for char in text if char not in string.punctuation])
+    # text = re.sub('[0-9]+', '', text)
+    # return text
+
+def remove_punct2(text):
+    translator = str.maketrans('', '', string.punctuation)
+    return text.translate(translator)
+
+def tokenize(text):
+    text = re.split('\W+', text)
+    return text
+
+def remove_stopwords(text,stopword):
+    text = [word for word in text if word not in stopword]
+    return text
+
 def starts(path):
+    # extract hashtags to list
+    # strip hashtags, mentions, emoji, url
+    # save hashtags and processed caption
+
     c = 0
-    pipe = r.pipeline()
+    # pipe = r.pipeline()
+    stopword = nltk.corpus.stopwords.words('english')
+
     for page in load_posts_file_dir(path):
         for edge in page['edges']:
             post = post_dict(edge)
             c += 1
             try:
-                # if c < 7000:
-                #     print(c)
-                #     continue
-                # if c > 7800:
-                #     # pipe.execute()
-                #     print(c)
-                #     continue
                 id = edge['node']['id']
-                pipe.hmset("post:"+str(id),post)
-                if c > 800:
-                    responses = pipe.execute()
-                    time.sleep(0.5)
-                    c = 0
-                #     pipe.reset()
+                caption, tags = extract_hashtags(post['caption'])
+                caption, mentions = extract_mentions(caption)
+                caption = remove_punct2(caption)
+                caption = tokenize(caption)
+                caption = remove_stopwords(caption, stopword)
+                # print(str(caption))
+
+
             except:
                 continue
         
         
                 #     c = 0
-            #     hashtags = extract_hashtags_og(post['caption'])
-            #     # hashtags = extract_hashtags(post['caption'])
             #     # print(hashtags)
             #     # print(hashtags1)
             #     # pipe.lpush("tags:"+str(id),*hashtags)
@@ -643,7 +683,7 @@ def starts(path):
            
             # id = ""
         # print("tm to fill pipe: " + str(time.perf_counter() - start))
-    pipe.execute()
+    # pipe.execute()
    
 start = time.perf_counter()
 
@@ -693,32 +733,32 @@ print("tm to exc pipe: " + str(end - start))
 
 
 # start = time.clock()
-# pool = Pool(50)
-# pipe = r.pipeline()
-# for page in load_posts_file_dir(path):
-#     p = Process(target=set_pipe,args=(page,pipe)) # goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
-#     p.start()
-#     p.join()
-#     # set_pipe(page, pipe)
-# print(time.clock() - start)
+    # pool = Pool(50)
+    # pipe = r.pipeline()
+    # for page in load_posts_file_dir(path):
+    #     p = Process(target=set_pipe,args=(page,pipe)) # goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
+    #     p.start()
+    #     p.join()
+    #     # set_pipe(page, pipe)
+    # print(time.clock() - start)
 
-# pipe.execute()
-# print(time.clock() - start)
+    # pipe.execute()
+    # print(time.clock() - start)
 
-    # r.lpush(redis_key, json.dump(post))
+        # r.lpush(redis_key, json.dump(post))
 
-# yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
+    # yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
 
 """ 
 processes = []
-pool = Pool(50)
-manager = Manager()
-shared_list = manager.list()
-[pool.apply_async(get_coms, args=[post,shared_list]) for post in posts2 ]
-pool.close()
-pool.join()
-print("shared_list:")
-print(shared_list)
+    pool = Pool(50)
+    manager = Manager()
+    shared_list = manager.list()
+    [pool.apply_async(get_coms, args=[post,shared_list]) for post in posts2 ]
+    pool.close()
+    pool.join()
+    print("shared_list:")
+    print(shared_list)
 """
 # pool.map(get_coms, posts2,shared_list)  
 
