@@ -27,6 +27,9 @@ from glob import glob
 import pathlib
 import string
 import nltk
+from nltk.corpus import wordnet
+import csv
+
 
 def default_user_agent() -> str:
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
@@ -196,7 +199,7 @@ class InstaloaderContextTommy(InstaloaderContext):
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
         is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
-        # proxies = self.proxy(self.proxies)  
+        # proxies = self.proxy(self.proxies)
         # ip = sess.get('https://api.ipify.org').text
         try:
             print("my: get_json")
@@ -204,16 +207,21 @@ class InstaloaderContextTommy(InstaloaderContext):
             for attempt_no in range(100):
                 proxies = random.choice(self.proxies)
                 print("attempt: " + str(attempt_no))
-                print(str(proxies))      
-                resp = sess.get('https://{0}/{1}'.format(host, path), 
-                    proxies=proxies, params=params, allow_redirects=True, timeout=3)
-                
+                print(str(proxies))
+                resp = sess.get(
+                    'https://{0}/{1}'.format(host, path),
+                    proxies=proxies, params=params,
+                    allow_redirects=True, timeout=3)
                 while resp.is_redirect:
                     redirect_url = resp.headers['location']
-                    self.log('\nHTTP redirect from https://{0}/{1} to {2}'.format(host, path, redirect_url))
+                    self.log(
+                        '\nHTTP redirect from https://{0}/{1} to {2}'.format(
+                            host, path, redirect_url))
                     if redirect_url.startswith('https://{}/'.format(host)):
-                        resp = sess.get(redirect_url if redirect_url.endswith('/') else redirect_url + '/',
-                                        proxies=proxies, params=params, allow_redirects=False, timeout=4)
+                        resp = sess.get(
+                            redirect_url if redirect_url.endswith('/') else redirect_url + '/',
+                            proxies=proxies, params=params,
+                            allow_redirects=False, timeout=4)
                     else:
                         break
                 if resp.status_code == 400:
@@ -493,7 +501,6 @@ def multireplace(string, replacements):
     # For each match, look up the new string in the replacements
     return regexp.sub(lambda match: replacements[match.group(0)], string)
 
-
 def extract_hashtags1(caption) -> List[str]:
     """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
     start = time.perf_counter()
@@ -549,8 +556,6 @@ def extract_mentions(caption) -> List[str]:
     caption = regexp.sub(repl, caption.lower())
     return caption, tags
 
-
-
 def remove_mentions(caption, regexp):
     caption = regexp.sub("", caption)
     return caption
@@ -566,6 +571,10 @@ def extract_hashtags_og(caption) -> List[str]:
     return result
 
 def post_dict(edge):
+        try:
+            id = edge['node']['id']
+        except:
+            id = ""
         try:
             likes = edge['node']['edge_liked_by']['count']
         except:
@@ -595,7 +604,7 @@ def post_dict(edge):
         except:
             timestamp = ""
         scrape_date = time.time()
-        return {"likes": likes, "comments":comments,"caption":caption, 
+        return {"id": id, "likes": likes, "comments":comments,"caption":caption, 
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
 
 # self.sma = Caption(value=0.1, count=19)
@@ -642,6 +651,22 @@ def remove_stopwords(text,stopword):
     text = [word for word in text if word not in stopword]
     return text
 
+def lemmatize(text, wn):
+    text = [wn.lemmatize(word) for word in text]
+    return text
+
+def get_wordnet_pos(treebank_tag):
+    if treebank_tag.startswith('J'):
+        return wordnet.ADJ
+    elif treebank_tag.startswith('V'):
+        return wordnet.VERB
+    elif treebank_tag.startswith('N'):
+        return wordnet.NOUN
+    elif treebank_tag.startswith('R'):
+        return wordnet.ADV
+    else:
+        return ''
+
 def starts(path):
     # extract hashtags to list
     # strip hashtags, mentions, emoji, url
@@ -650,6 +675,22 @@ def starts(path):
     c = 0
     # pipe = r.pipeline()
     stopword = nltk.corpus.stopwords.words('english')
+    wn = nltk.WordNetLemmatizer()
+
+    try:
+        needles = ["ahhkshawn", "auction", "auct10n", "auk-shin", 
+        "aukshun", "auktion", "awk-sheen", "awkshin", "awkshun", 
+        "bid", "dibs", "sold"]
+        exclude = ["facebook", "go check", "go leave", "posts back", "post back"]
+    except Exception as e:
+        print("exception: " + str(e))
+
+    with open("tags.csv", "a", newline="") as tagsfile:
+        fieldnames = ['id','likes', 'comments', 'caption', 'typename',
+         'owner_id', 'shortcode', 'timestamp', 'scrape_date', 'tags', 
+         'captions', 'caption_no_tags', 'match', 'pre_length', 'post_length']
+        writer = csv.DictWriter(tagsfile, fieldnames=fieldnames)
+        writer.writeheader()
 
     for page in load_posts_file_dir(path):
         for edge in page['edges']:
@@ -657,15 +698,41 @@ def starts(path):
             c += 1
             try:
                 id = edge['node']['id']
+                pre_length = len(post['caption'])
                 caption, tags = extract_hashtags(post['caption'])
                 caption, mentions = extract_mentions(caption)
+                post["caption_no_tags"] = caption
+                post["tags"] = tags
                 caption = remove_punct2(caption)
                 caption = tokenize(caption)
                 caption = remove_stopwords(caption, stopword)
-                # print(str(caption))
+                # TODO: STRIP URLS
+                caption = ' '.join(caption)
+                # lemmatized_caption = lemmatize(caption, wn)
+                # post["lemmatized_caption"] = lemmatized_caption
+                post_length = len(caption)
+                post["captions"] = caption
+                if any(word in caption for word in exclude):
+                    post["match"] = 0
+                    csvfile["match"] = post["match"]
+                elif any(word in caption for word in needles):
+                    post["match"] = 1
+                    csvfile["match"] = post["match"]
 
+                csvfile = {}
+                csvfile["id"] = id
+                csvfile["captions"] = caption
+                csvfile["pre_length"] = pre_length
+                csvfile["post_length"] = post_length
+                with open("tags.csv", "a", newline="") as file:
+                    fieldnames = ['id','likes', 'comments', 'caption',
+                     'typename', 'owner_id', 'shortcode', 'timestamp',
+                      'scrape_date', 'tags', 'captions', 'caption_no_tags', 'match', 'pre_length', 'post_length']
+                    writer = csv.DictWriter(file, fieldnames=fieldnames)
+                    writer.writerow(csvfile)
 
-            except:
+            except Exception as e:
+                print("exception: " + str(e))
                 continue
         
         
