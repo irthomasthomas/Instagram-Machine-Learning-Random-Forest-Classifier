@@ -632,14 +632,14 @@ def post_dict(edge):
 
     #     #################
 
-def remove_punct(text):
+def remove_punctA(text):
     regex = re.compile('[%s]' % re.escape(string.punctuation))
     return regex.sub('', text)
     # text = "".join([char for char in text if char not in string.punctuation])
     # text = re.sub('[0-9]+', '', text)
     # return text
 
-def remove_punct2(text):
+def remove_punct(text):
     translator = str.maketrans('', '', string.punctuation)
     return text.translate(translator)
 
@@ -703,7 +703,7 @@ def starts(path):
                 caption, mentions = extract_mentions(caption)
                 post["caption_no_tags"] = caption
                 post["tags"] = tags
-                caption = remove_punct2(caption)
+                caption = remove_punct(caption)
                 caption = tokenize(caption)
                 caption = remove_stopwords(caption, stopword)
                 # TODO: STRIP URLS
@@ -778,10 +778,12 @@ with Manager() as manager:
     print("posts: " + str(len(posts)))
  """
 
+# redis connection
 r = redis.Redis(host='localhost', port=6379, db=0)
 redis_key = "posts"
-processes = []
 
+# start process for each sub 
+processes = []
 subdirs = pathlib.Path(path).glob('*/')
 for i in subdirs:
     if os.path.isdir(i):

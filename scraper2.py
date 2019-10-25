@@ -539,7 +539,7 @@ with Manager() as manager:
     p.join()
     print("posts: " + str(len(posts)))
  """
-# 6379
+
 r = redis.Redis(host='localhost', port=6379, db=0)
 redis_key = "posts"
 processes = []
@@ -553,12 +553,23 @@ pipe = r.pipeline()
 for page in load_posts_file_dir(path):
     for edge in page['edges']:
         post = post_dict(edge)
+        # print(str(post))
         try:
             id = edge['node']['id']
         except:
             id = ""
         # if not r.exists(id):
-        pipe.hmset("post:"+str(id),post)
+        # pipe.hmset("post:"+str(id),post)
+        # pipe.xadd("post:"+str(id),post)
+        msg = {
+            'scrape_date': post['scrape_date'],
+            'caption': post['caption'],
+            'post_id': id
+        }
+        pipe.xadd("post:", msg, maxlen=None)
+        # xadd(name, fields, id='*', maxlen=None, approximate=True)
+        # _id = conn.xadd('camera:0', msg, maxlen=args.maxlen)
+        # 'camera:0'
 
 print(time.time() - start)
 pipe.execute()
