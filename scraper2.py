@@ -19,14 +19,20 @@ import time
 from DB import Database
 import re
 import sys
-# import ujson
+import string
 from prometheus_client import Counter, start_http_server
 
 from multiprocessing import Process, Queue, Manager, Pool
+from multiprocessing.dummy import Pool as ThreadPool 
+
+import pandas as pd
+from nltk.corpus import stopwords
+
 
 def default_user_agent() -> str:
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
            '(KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36'
+
 
 class InstaloaderTommy(Instaloader):
     def __init__(self):
@@ -107,6 +113,7 @@ class InstaloaderTommy(Instaloader):
             else:
                 update_end_cursor("",hashtag,0)
     
+
 class InstaloaderContextTommy(InstaloaderContext):
     default_user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
     
@@ -257,6 +264,7 @@ class InstaloaderContextTommy(InstaloaderContext):
                 self.error("[skipped by user]", repeat_at_end=False)
                 raise ConnectionException(error_string) from err
     
+
 class TPost(Post):
     def __init__(self, context: InstaloaderContext, node: Dict[str, Any],
                  owner_profile: Optional['Profile'] = None):
@@ -354,6 +362,7 @@ class TPost(Post):
                 self._node.update(self._full_metadata_dict)
                 raise PostChangedException
 
+
 def update_end_cursor(end_cursor,hashtag,has_next_page):
     inputs = (end_cursor,hashtag,has_next_page,datetime.now())
         
@@ -410,31 +419,37 @@ def load_post_from_file(file):
         resp_json = json.loads(f)
         yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
 
+
+def load_post_from_file_to_list(file, posts):
+    with open(file, 'r') as fp:
+        f = fp.read()
+        resp_json = json.loads(f)
+        for edge in resp_json:
+            posts.append(TPost(scraper.context, edge['node']))
+        # posts.append((TPost(scraper.context, edge['node']) for edge in resp_json['edges']))
+
+
 def load_posts_file_dir(path):
     for file in os.scandir(path):
         with open(file, 'r') as fp:
             f = fp.read()
             yield json.loads(f)
 
-def load_json_posts_file_dir(path,posts):
+def load_json_posts_file_dir(path, posts):
     for file in os.scandir(path):
         with open(file, 'r') as fp:
             f = fp.read()
             posts.append(json.loads(f))
 
-def fill_mp(pages,posts):
+def fill_mp(pages, posts):
     for page in pages:
         fill_post_list(page,posts)
 
-def fill_post_list(page,posts):
-    # print("fill_post_list: ")
-    # print(str(len(posts)))
-    # print(str(page))
+def fill_post_list(page, posts):
     for edge in page['edges']:
         posts.append(TPost(scraper.context, edge['node']))
-    # posts.append(TPost(scraper.context, edge['node']) for edge in page['edges'])
 
-def get_coms(post,shared_list):
+def get_coms(post, shared_list):
     count = 0
     try:
         for comment in post.get_comments():
@@ -463,7 +478,20 @@ def save_to_file(data, filename: str) -> None:
     with lzma.open(filename, 'wt') as fp:
             json.dump(data, fp=fp, separators=(',', ':'))
 
-def extract_hashtags(caption) -> List[str]:
+
+def extract_mentions(caption) -> List[str]:
+    regexp = re.compile(r"(?:@)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
+    tags = []
+
+    def repl(m):
+        tags.append(m.group(0))
+        return ""
+
+    caption = regexp.sub(repl, caption.lower())
+    return caption, tags
+
+
+def extract_hashtagsOG(caption) -> List[str]:
     """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
     print("exctract_hashtags")
     # if not self.caption:
@@ -506,29 +534,211 @@ def post_dict(post):
         return {"likes": likes, "comments":comments,"caption":caption, 
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
     
+def remove_stopwords(text,stopword):
+    text = [word for word in text if word not in stopword]
+    return text
 
-tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-print("TOTAL MEM: " + str(tot_m))
-print("USED MEM: " + str(used_m))
-print("FREE_M: " + str(free_m))
+def extract_hashtags(caption) -> List[str]:
+    regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
+    tags = []
 
-session = requests.session()
-scraper = InstaloaderTommy()
+    def repl(m):
+        tags.append(m.group(0))
+        return ""
+
+    caption = regexp.sub(repl, caption.lower())
+    return caption, tags
+
+
+def remove_punct(text):
+    translator = str.maketrans('', '', string.punctuation)
+    return text.translate(translator)
+
+def tokenize(text):
+    text = re.split('\W+', text)
+    return text
+
+def pre_proc_text(caption):
+    caption = re.split('\W+', caption)
+    caption, tags = extract_hashtags(post['caption'])
+    caption, mentions = extract_mentions(caption)
+    caption = remove_punct(caption)
+    caption = tokenize(caption)
+    caption = remove_stopwords(caption, stopwords)
+    caption = ' '.join(caption)
+
+    return caption
+
+def pre_proc_text_mp(post, caplist):
+    from nltk.corpus import stopwords
+    stopwords = stopwords.words('english')
+    caption = post['caption']
+    caption = re.split('\W+', caption)
+    caption, tags = extract_hashtags(post['caption'])
+    caption, mentions = extract_mentions(caption)
+    caption = remove_punct(caption)
+    caption = tokenize(caption)
+    caption = remove_stopwords(caption, stopwords)
+    caption = ' '.join(caption)
+    caplist.append(caption)
+    return caption
+
+
+def scrape(path):
+    r = redis.Redis(host='localhost', port=6379, db=0)
+    redis_key = "posts"
+    processes = []
+    
+    for subdir, dirs, files in os.walk(path):
+        print(subdir)
+        
+    start = time.time()
+    posts2 = []
+    pipe = r.pipeline()
+    i = 0
+    for page in load_posts_file_dir(path):
+        for edge in page['edges']:
+            post = post_dict(edge)
+            # print(str(post))
+            try:
+                id = edge['node']['id']
+            except:
+                id = ""
+            caption = pre_proc_text(post['caption'])
+            print(caption)
+            msg = {
+                'scrape_date': post['scrape_date'],
+                'caption': caption,
+                'post_id': id
+            }
+            r.xadd("post:", msg, maxlen=None)
+            time.sleep(1)
+            i = i + 1
+            print(str(i))
+            # xadd(name, fields, id='*', maxlen=None, approximate=True)
+            # _id = conn.xadd('camera:0', msg, maxlen=args.maxlen)
+            # 'camera:0'
+        # pipe.execute()
+        time.sleep(2)
+        
+def print_mem_use():
+    tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
+    print("TOTAL MEM: " + str(tot_m))
+    print("USED MEM: " + str(used_m))
+    print("FREE_M: " + str(free_m))
+
+def load_post_dic(page, l):
+    for edge in page['edges']:
+        post = post_dict(edge)
+        l.append(post)
+
+
+# Export Prometheus
 commentCount = Counter('scraped_comments', 'Session Scraped Comments')
 hashtagPostCount = Counter('scraped_hashtag_posts', 'Session scraped hashtag posts')
 start_http_server(8080)
 
-if len(sys.argv) >= 1:
-     path=sys.argv[1]
-#     start_tag = sys.argv[2]
+# Load instagram session
+session = requests.session()
+scraper = InstaloaderTommy()
 
-# pages = []
-# # fill pages list
-# load_json_posts_file_dir(path, pages)
+if len(sys.argv) > 1:
+     path=sys.argv[1]
+
+start = time.time()
+
+path = "/root/dev/scrapeimport"
+stopwords = stopwords.words('english')
+
+posts = []
+list2 = []
+pages = []
+processes = []
+
+for dir in os.scandir(path):
+    for file in os.scandir(dir):
+        with open(file, 'r') as fp:
+            page = json.loads(fp.read())
+            pages.append(page)
+            for edge in page['edges']:
+                post = post_dict(edge)
+                # list2.append(post)
+                try:
+                    id = edge['node']['id']
+                except:
+                    id = ""
+                proc_caption = pre_proc_text(post['caption'])
+                # print(proc_caption)
+                list2.append([id, post['caption'], proc_caption])
+               
+
+print(len(pages))
+print(len(list2))
+print(time.time() - start)
+# posts = manager.list()
+#     # processes = []
+#     for page in pages:
+#         p = Process(target=fill_post_list, args=(page,posts))
+#         p.start()
+#         # processes.append(p)
+#     # for p in processes:
+#     p.join()
+#     print("posts: " + str(len(posts)))
+
+        # # print(str(post))
+        #     try:
+        #         id = edge['node']['id']
+        #     except:
+        #         id = ""
+        #     proc_caption = pre_proc_text(post['caption'])
+        #     print(proc_caption)
+        #     list2.append([id, post['caption'], proc_caption])
+
+
+# output_file2 = "/root/dev/projects/scrape/df2.csv"
+# df2 = pd.DataFrame(list2)
+# df2.to_csv(output_file2, header=False)
+# print(time.time() - start)
+
+
+# with Manager() as manager:
+#     L = manager.list()
+#     processes = []
+#     for f in files:
+#         # for post in load_post_from_file(f):
+#         p = Process(target=load_post_from_file_to_list, args=(f, L))
+#         p.start()
+#         # processes.append(p)
+#     # for p in processes:
+#         p.join()
+
+print("end")
+print(time.time() - start)
+
+#     print("posts: " + str(len(posts)))
+
+# for page in load_posts_file_dir(path):
+#     for edge in page['edges']:
+#         post = post_dict(edge)
+#         # print(str(post))
+#         try:
+#             id = edge['node']['id']
+#         except:
+#             id = ""
+#         proc_caption = pre_proc_text(post['caption'])
+#         list2.append([id, post['caption'], proc_caption])
+     
+
+# output_file2 = "/root/dev/projects/scrape/df2.csv"
+# df2 = pd.DataFrame(list2)
+# df2.to_csv(output_file2, header=False)
+# print(time.time() - start)
+
+#     start_tag = sys.argv[2]
 
 # multip fill list of posts
 """ 
-with Manager() as manager:
+with Manager() as MPmanager:
     posts = manager.list()
     # processes = []
     for page in pages:
@@ -539,41 +749,6 @@ with Manager() as manager:
     p.join()
     print("posts: " + str(len(posts)))
  """
-
-r = redis.Redis(host='localhost', port=6379, db=0)
-redis_key = "posts"
-processes = []
-for subdir, dirs, files in os.walk(path):
-    print(subdir)
-    
-start = time.time()
-posts2 = []
-pipe = r.pipeline()
-
-for page in load_posts_file_dir(path):
-    for edge in page['edges']:
-        post = post_dict(edge)
-        # print(str(post))
-        try:
-            id = edge['node']['id']
-        except:
-            id = ""
-        # if not r.exists(id):
-        # pipe.hmset("post:"+str(id),post)
-        # pipe.xadd("post:"+str(id),post)
-        msg = {
-            'scrape_date': post['scrape_date'],
-            'caption': post['caption'],
-            'post_id': id
-        }
-        pipe.xadd("post:", msg, maxlen=None)
-        # xadd(name, fields, id='*', maxlen=None, approximate=True)
-        # _id = conn.xadd('camera:0', msg, maxlen=args.maxlen)
-        # 'camera:0'
-
-print(time.time() - start)
-pipe.execute()
-print(time.time() - start)
 
 
     # r.lpush(redis_key, json.dump(post))

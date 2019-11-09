@@ -4,6 +4,8 @@ from sklearn.datasets import load_files
 from time import time
 import pickle
 import csv
+import re
+import string
 
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -13,8 +15,240 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve, auc
+import tensorflow as tf
+# from stop_words import get_stop_words
 
-def train_rfc(input_file):
+
+def get_num_words_per_sample(sample_texts):
+    num_words = [len(s.split()) for s in sample_texts]
+    return np.median(num_words)
+
+
+def pre_proc_text(caption):
+
+    def extract_hashtags(caption):
+        regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
+        tags = []
+
+        def repl(m):
+            tags.append(m.group(0))
+            return ""
+
+        caption = regexp.sub(repl, caption.lower())
+        return caption, tags
+
+    def extract_mentions(caption):
+        regexp = re.compile(r"(?:@)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
+        tags = []
+
+        def repl(m):
+            tags.append(m.group(0))
+            return ""
+
+        caption = regexp.sub(repl, caption.lower())
+        return caption, tags
+
+    def remove_punct(text):
+        translator = str.maketrans('', '', string.punctuation)
+        return text.translate(translator)
+
+    def tokenize(text):
+        text = re.split('\W+', text)
+        return text
+    
+    def remove_stopwords(text, stopword):
+        text = [word for word in text if word not in stopword]
+        return text
+    
+    caption, tags = extract_hashtags(caption)
+    caption, mentions = extract_mentions(caption)
+    caption = remove_punct(caption)
+    caption = tokenize(caption)
+    caption = remove_stopwords(caption, stopwords)
+    caption = ' '.join(caption)
+    caption = caption.rstrip()
+    
+    # return [post[0], post[1], caption]
+    return caption
+
+
+def train_tf_keras(input_file):
+    from multiprocessing import Pool
+    start = time()
+
+    df = pd.read_csv(input_file, header=0, usecols=["og_caption", "target"])
+    og_captions = df['og_caption'].values.tolist()
+
+    captions = []
+    pool = Pool(3)
+    captions = [x for x in pool.map(pre_proc_text, og_captions) if x is not None]
+    df['clean_caption'] = pd.Series(captions)
+    df, y = df.clean_caption, df.target
+
+    documents = []
+    for caption in range(0, len(df)):
+        document = str(df[caption])
+        documents.append(document)
+
+    # df = np.array(df)
+    # y = np.array(y)
+
+    from sklearn.model_selection import train_test_split
+    sentences_train, sentences_test, y_train, y_test = train_test_split(
+        df, y, test_size=0.15, random_state=1000)
+    from keras.preprocessing.text import Tokenizer
+    tokenizer = Tokenizer(num_words=5000)
+    tokenizer.fit_on_texts(sentences_train)
+    X_train = tokenizer.texts_to_sequences(sentences_train)
+    X_test = tokenizer.texts_to_sequences(sentences_test)
+    
+    vocab_size = len(tokenizer.word_index) + 1
+    print(sentences_train[2])
+    print(X_train[2])
+    
+    from keras.preprocessing.sequence import pad_sequences
+    X_train = pad_sequences(
+        X_train, padding="post", maxlen=100)
+    X_test = pad_sequences(X_test, padding="post", maxlen=100)
+    print(X_train[0, :])
+
+    from keras.models import Sequential
+    from keras import layers
+    model = Sequential()
+    print("model = Sequential")
+    model.add(layers.Embedding(
+        input_dim=vocab_size,
+        output_dim=50,
+        input_length=100))
+    print("model layers embedding")
+    model.add(layers.Flatten())
+    model.add(layers.Dense(10, activation="relu"))
+    model.add(layers.Dense(1, activation="sigmoid"))
+    model.compile(
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=["accuracy"])
+    print("model compiled")
+    model.summary()
+    print("summary")
+    history = model.fit(
+        X_train, y_train,
+        epochs=20,
+        verbose=False,
+        validation_data=(X_test, y_test),
+        batch_size=10)
+    print("fitted model")
+    loss, accuracy = model.evaluate(X_train, y_train, verbose=False)
+    print("Training accuracy: {:.4f}".format(accuracy))
+    loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
+    print("Testing Accuracy : {:.4f}".format(accuracy))
+    import keras2onnx
+    import onnx
+    onnx_model = keras2onnx.convert_keras(model, model.name)
+
+    temp_model_file = "model.onnx"
+    onnx.save_model(onnx_model, temp_model_file)
+    # sess = onnxruntime.InferenceSession(temp_model_file)
+
+
+    return model
+
+
+
+def train_tf_rfc(input_file):
+    from multiprocessing import Pool
+    start = time()
+
+    df = pd.read_csv(input_file, header=0, usecols=["og_caption", "target"])
+    # df.columns = ["data", "target"] id	og_caption	mod_caption	target
+    og_captions = df['og_caption'].values.tolist()
+
+    captions = []
+    pool = Pool(3)
+    captions = [x for x in pool.map(pre_proc_text, og_captions) if x is not None]
+    # print(captions)
+    print("num words per sample: ")
+    print(str(get_num_words_per_sample(captions)))
+    df['clean_caption'] = pd.Series(captions)
+    df, y = df.clean_caption, df.target
+    # df, y = df.og_caption, df.target
+
+    documents = []
+    for caption in range(0, len(df)):
+        document = str(df[caption])
+        documents.append(document)
+
+    vectorizer = TfidfVectorizer(
+        max_features=80, stop_words=stopwords)
+    print(str(time() - start))
+
+    X = vectorizer.fit_transform(documents).toarray()
+    print(str(time() - start))
+
+    pickle.dump(vectorizer, open("vectorizer.pickle", "wb"))
+    print(str(time() - start))
+
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=0)
+
+    from keras.models import Sequential
+    from keras import layers
+    input_dim = X_train.shape[1]
+    model = Sequential()
+    model.add(
+        layers.Dense(10, input_dim=input_dim, activation="relu"))
+    model.add(layers.Dense(1, activation='sigmoid'))
+    model.compile(
+        optimizer="adam",
+        loss="binary_crossentropy",
+        metrics=["accuracy"])
+    model.summary()
+
+    history = model.fit(
+        X_train, y_train,
+        epochs=20,
+        verbose=False,
+        validation_data=(X_test, y_test),
+        batch_size=5)
+
+    loss, accuracy = model.evaluate(
+        X_train, y_train, verbose=False)
+    print("Training accuracy: {:.4f}".format(accuracy))
+    loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
+    print("Testing accuracy: {:.4f}".format(accuracy))
+    # from sklearn.ensemble import RandomForestClassifier as rfc
+        # import tflearn
+        # from tflearn.estimators import RandomForestClassifier as rfc
+        
+        # train_results = []
+        # test_results = []
+        
+        # m = rfc(
+        #     n_estimators=32, 
+        #     max_nodes=45,
+        #     n_classes=None,
+        #     n_features=None,
+        #     metric=None,
+        #     graph=None,
+        #     global_step=None)
+
+        # m.fit(X_train, y_train)
+        # print(m.evaluate(X_train, X_test, tflearn.accuracy_op))
+        # print(m.evaluate(y_train, y_test, tflearn.accuracy_op))
+        # print(m.predict(y_train))
+    
+    # train_pred = m.predict(X_train)
+    # y_pred = m.predict(X_test)
+
+    print(str(time() - start))
+    
+    
+    with open("tf_rf_classifier", "wb") as picklefile:
+        pickle.dump(classifier, picklefile)
+    return classifier
+
+
+def train_sk_rfc(input_file):
     df = pd.read_csv(input_file, header=None)
     df.columns = ["data", "target"]
 
@@ -24,7 +258,7 @@ def train_rfc(input_file):
     for caption in range(0, len(df)):
         document = str(df[caption])
         documents.append(document)
-    print(df)
+    # print(df)
     # Convert to numbers with bag of words
     """ start = time()
     from sklearn.feature_extraction.text import CountVectorizer
@@ -45,11 +279,15 @@ def train_rfc(input_file):
         print(str(x)) """
 
     start = time()
+    # stop_words = get_stop_words('english')
+
     vectorizer = TfidfVectorizer(
         max_features=80, stop_words=stopwords.words('english'))
     print(str(time() - start))
 
     X = vectorizer.fit_transform(documents).toarray()
+    print(str(time() - start))
+
     pickle.dump(vectorizer, open("vectorizer.pickle", "wb"))
     print(str(time() - start))
 
@@ -105,7 +343,7 @@ def train_rfc(input_file):
     return classifier
 
 
-def save_to_onnx(classifier, output_filename):
+def save_sklearn_to_onnx(classifier, output_filename):
     # Convert to ONNX format 
     from skl2onnx import convert_sklearn
     from skl2onnx.common.data_types import FloatTensorType
@@ -133,11 +371,11 @@ def predict_and_merge(input_file, output_file, sess):
     for caption in range(0, len(df)):
         document = str(df[caption])
         test_documents.append(document)
-    
+
     vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
 
     X = vectorizer.transform(test_documents).toarray()
- 
+
     input_name = sess.get_inputs()[0].name
     label_name = sess.get_outputs()[0].name
     pred_onx = sess.run(
@@ -151,7 +389,7 @@ def predict_and_merge(input_file, output_file, sess):
     # prediction = pd.DataFrame(pred_onx)
     prediction = model.predict(X)
     # prediction = pd.DataFrame(model.predict(X))
-  
+
     print(confusion_matrix(y, prediction))
     print(classification_report(y, prediction))
     print(accuracy_score(y, prediction))
@@ -169,6 +407,11 @@ def predict_and_merge(input_file, output_file, sess):
 
 def predict(text, onx):
     vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
+    # stop_words = get_stop_words('english')
+
+    # vectorizer = TfidfVectorizer(
+    #     max_features=80, stop_words=stopwords.words('english'))
+    print(type(text))
     input_name = onx.get_inputs()[0].name
     label_name = onx.get_outputs()[0].name
     print(input_name)
@@ -181,11 +424,11 @@ def predict(text, onx):
     print(pred_onx)
    
     
-    with open("text_classifier", "rb") as training_model:
-        model = pickle.load(training_model)
+    # with open("text_classifier", "rb") as training_model:
+    #     model = pickle.load(training_model)
 
-    prediction = model.predict(X)
-    print(str(prediction))
+    # prediction = model.predict(X)
+    # print(str(prediction))
 
 
 def cross_validate(X_train, y_train, clf):
@@ -236,47 +479,22 @@ def train_models(input_file, test_file):
 
 
 # input_file = "ml data - full - balanced.csv"
-input_file = "data/ml data - full - biased.csv"
 # input_file = "mlOutput - testSet.csv"
 # input_file = "ml data - full - biased - testSet.csv"
-test_file = "ml data - full - biased - testSet1.csv"
-# classifier = train_rfc(input_file)
-# save_to_onnx(classifier, "unbalanced4.5.onnx")
+stopwords = stopwords.words('english')
+
+input_file = "training_captions.csv"
+classifier = train_tf_keras(input_file)
+# classifier = train_tf_rfc(input_file)
+# save_to_onnx(classifier, "unbalanced_tf1.1.onnx")
     # train_models(input_file, test_file)
-sess = load_model_onnx("unbalanced4.5.onnx")
-output_file = "unbalanced4.5_result2.csv"
+
+# sess = load_model_onnx("unbalanced4.6.onnx")
+# output_file = "unbalanced4.6_result1.csv"
 # predict_and_merge(test_file, output_file, sess)
 
-with open(test_file, 'r') as csvfile:
-    reader = csv.reader(csvfile)
-    for row in reader:
-        predict(row, sess)
-
-
-# SAVE MODEL
-# with open("text_classifier", "wb") as picklefile:
-#     pickle.dump(classifier, picklefile)
-
-# Load Model
-# with open("text_classifier", "rb") as training_model:
-#     model = pickle.load(training_model)
-
-""" import csv
-    import itertools as IT
-    filenames = ["testest.csv", "result.csv"]
-    handles = [open(filename, 'r') for filename in filenames]
-    readers = [csv.reader(f, delimiter=",") for f in handles]
-
-    with open(output_file, "w", newline="") as outputfile:
-        writer = csv.writer(outputfile, delimiter=",", lineterminator="\n")
-        for rows in IT.zip_longest(*readers, fillvalue=[""]*2):
-            combined_row = []
-            for row in rows:
-                row = row[:2]
-                if len(row) == 2:
-                    combined_row.extend(row)
-                else:
-                    combined_row.extend([""]*2)
-            writer.writerow(combined_row)
-    for f in handles:
-        f.close() """
+# test_file = "ml data - full - biased - testSet1.csv"
+# with open(test_file, 'r') as csvfile:
+#     reader = csv.reader(csvfile)
+#     for row in reader:
+#         predict(row, sess)
