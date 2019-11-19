@@ -598,28 +598,32 @@ def scrape(path):
     i = 0
     for page in load_posts_file_dir(path):
         for edge in page['edges']:
-            post = post_dict(edge)
-            # print(str(post))
+            # post = post_dict(edge)
+            try:
+                caption = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
+            except:
+                caption = ""
+            scrape_date = time.time()
+
             try:
                 id = edge['node']['id']
             except:
                 id = ""
-            caption = pre_proc_text(post['caption'])
-            print(caption)
+            # caption = pre_proc_text(post['caption'])
             msg = {
-                'scrape_date': post['scrape_date'],
+                'scrape_date': scrape_date,
                 'caption': caption,
                 'post_id': id
             }
             r.xadd("post:", msg, maxlen=None)
-            time.sleep(1)
+            # time.sleep(1)
             i = i + 1
-            print(str(i))
+            # print(str(i))
             # xadd(name, fields, id='*', maxlen=None, approximate=True)
             # _id = conn.xadd('camera:0', msg, maxlen=args.maxlen)
             # 'camera:0'
         # pipe.execute()
-        time.sleep(2)
+        # time.sleep(2)
         
 def print_mem_use():
     tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
@@ -647,34 +651,34 @@ if len(sys.argv) > 1:
 
 start = time.time()
 
-path = "/root/dev/scrapeimport"
+# path = "/root/dev/scrapeimport"
 stopwords = stopwords.words('english')
+scrape(path)
+# posts = []
+# list2 = []
+# pages = []
+# processes = []
 
-posts = []
-list2 = []
-pages = []
-processes = []
-
-for dir in os.scandir(path):
-    for file in os.scandir(dir):
-        with open(file, 'r') as fp:
-            page = json.loads(fp.read())
-            pages.append(page)
-            for edge in page['edges']:
-                post = post_dict(edge)
-                # list2.append(post)
-                try:
-                    id = edge['node']['id']
-                except:
-                    id = ""
-                proc_caption = pre_proc_text(post['caption'])
-                # print(proc_caption)
-                list2.append([id, post['caption'], proc_caption])
+# for dir in os.scandir(path):
+#     for file in os.scandir(dir):
+#         with open(file, 'r') as fp:
+#             page = json.loads(fp.read())
+#             pages.append(page)
+#             for edge in page['edges']:
+#                 post = post_dict(edge)
+#                 try:
+#                     id = edge['node']['id']
+#                 except:
+#                     id = ""
+#                 proc_caption = pre_proc_text(post['caption'])
+#                 # print(proc_caption)
+#                 list2.append([id, post['caption'], proc_caption])
                
 
-print(len(pages))
-print(len(list2))
+# print(len(pages))
+# print(len(list2))
 print(time.time() - start)
+
 # posts = manager.list()
 #     # processes = []
 #     for page in pages:
