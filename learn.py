@@ -16,7 +16,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve, auc
 import tensorflow as tf
-# from stop_words import get_stop_words
+from stop_words import get_stop_words
 
 
 def get_num_words_per_sample(sample_texts):
@@ -99,6 +99,8 @@ def train_tf_keras(input_file):
     from keras.preprocessing.text import Tokenizer
     tokenizer = Tokenizer(num_words=5000)
     tokenizer.fit_on_texts(sentences_train)
+    pickle.dump(tokenizer, open("tokenizer.pickle", "wb"))
+    print("saved tokenizer")
     X_train = tokenizer.texts_to_sequences(sentences_train)
     X_test = tokenizer.texts_to_sequences(sentences_test)
     
@@ -108,8 +110,8 @@ def train_tf_keras(input_file):
     
     from keras.preprocessing.sequence import pad_sequences
     X_train = pad_sequences(
-        X_train, padding="post", maxlen=100)
-    X_test = pad_sequences(X_test, padding="post", maxlen=100)
+        X_train, padding="post", maxlen=500)
+    X_test = pad_sequences(X_test, padding="post", maxlen=500)
     print(X_train[0, :])
 
     from keras.models import Sequential
@@ -119,7 +121,7 @@ def train_tf_keras(input_file):
     model.add(layers.Embedding(
         input_dim=vocab_size,
         output_dim=50,
-        input_length=100))
+        input_length=500))
     print("model layers embedding")
     model.add(layers.Flatten())
     model.add(layers.Dense(10, activation="relu"))
@@ -142,6 +144,8 @@ def train_tf_keras(input_file):
     print("Training accuracy: {:.4f}".format(accuracy))
     loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
     print("Testing Accuracy : {:.4f}".format(accuracy))
+    pickle.dump(model, open("tf_kerasmodel.pickle", "wb"))
+
     import keras2onnx
     import onnx
     onnx_model = keras2onnx.convert_keras(model, model.name)
@@ -249,6 +253,9 @@ def train_tf_rfc(input_file):
 
 
 def train_sk_rfc(input_file):
+    # from stop_words import get_stop_words
+    # stopwords = get_stop_words
+
     df = pd.read_csv(input_file, header=None)
     df.columns = ["data", "target"]
 
@@ -279,13 +286,16 @@ def train_sk_rfc(input_file):
         print(str(x)) """
 
     start = time()
-    # stop_words = get_stop_words('english')
+    stop_words = get_stop_words('english')
 
     vectorizer = TfidfVectorizer(
-        max_features=80, stop_words=stopwords.words('english'))
+        max_features=80, stop_words=stop_words)
     print(str(time() - start))
 
     X = vectorizer.fit_transform(documents).toarray()
+    print("SHAPE")
+    print(X.shape)
+
     print(str(time() - start))
 
     pickle.dump(vectorizer, open("vectorizer.pickle", "wb"))
@@ -431,6 +441,32 @@ def predict(text, onx):
     # print(str(prediction))
 
 
+def predict_tf_keras(text, onx):
+    from keras.preprocessing.sequence import pad_sequences
+
+    tokenizer = pickle.load(open("/root/dev/projects/scrape/tokenizer.pickle", "rb"))
+    model = pickle.load(open("tf_kerasmodel.pickle", "rb"))
+    
+    input_name = onx.get_inputs()[0].name
+    label_name = onx.get_outputs()[0].name
+    print(input_name)
+    print(label_name)
+    # X = vectorizer.transform(text).toarray()
+    text = pre_proc_text(text)
+    print(text)
+    tokenizer.fit_on_texts(text)
+    X = tokenizer.texts_to_sequences(text)
+    X = pad_sequences(
+        X, padding="post", maxlen=500)
+    pred = model.predict_classes(np.array(X))[0]
+    print(pred)
+
+    # pred_onx = onx.run(
+    #     [label_name], {input_name: np.array(X)})[0]
+    
+    # print(pred_onx)
+
+
 def cross_validate(X_train, y_train, clf):
     from sklearn.model_selection import cross_val_score
     # from sklearn.datasets import fetch_covtype
@@ -480,21 +516,24 @@ def train_models(input_file, test_file):
 
 # input_file = "ml data - full - balanced.csv"
 # input_file = "mlOutput - testSet.csv"
-# input_file = "ml data - full - biased - testSet.csv"
+input_file = "ml data - full - biased - testSet.csv"
 stopwords = stopwords.words('english')
 
-input_file = "training_captions.csv"
-classifier = train_tf_keras(input_file)
+# input_file = "training_captions.csv"
+# classifier = train_tf_keras(input_file)
 # classifier = train_tf_rfc(input_file)
+classifier = train_sk_rfc(input_file)
 # save_to_onnx(classifier, "unbalanced_tf1.1.onnx")
     # train_models(input_file, test_file)
 
-# sess = load_model_onnx("unbalanced4.6.onnx")
+sess = load_model_onnx("model.onnx")
 # output_file = "unbalanced4.6_result1.csv"
 # predict_and_merge(test_file, output_file, sess)
 
 # test_file = "ml data - full - biased - testSet1.csv"
-# with open(test_file, 'r') as csvfile:
-#     reader = csv.reader(csvfile)
-#     for row in reader:
-#         predict(row, sess)
+
+test_file = "testSet.csv"
+with open(test_file, 'r') as csvfile:
+    reader = csv.reader(csvfile)
+    for row in reader:
+        predict_tf_keras(row[2], sess)
