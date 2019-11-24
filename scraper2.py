@@ -98,25 +98,29 @@ class InstaloaderTommy(Instaloader):
                 params = {'__a': 1, 'max_id': end_cursor}
             else:
                 params = {'__a': 1}
-            hashtag_data = self.context.get_json('explore/tags/{0}/'.format(hashtag),
-                                                params)['graphql']['hashtag']['edge_hashtag_to_media']
+            hashtag_data = self.context.get_json(
+                'explore/tags/{0}/'.format(hashtag),
+                params)['graphql']['hashtag']['edge_hashtag_to_media']
             end_cursor = hashtag_data['page_info']['end_cursor']
-            dump_page_json(end_cursor,hashtag_data,hashtag)
+            # TODO: end_cursor key epiry
+            save_post_to_redis(hashtag_data)
+            # dump_page_json(end_cursor, hashtag_data, hashtag)
+
             # print(str(len(hashtag_data['edges'])))
-            #yield from (Post(self.context, edge['node']) for edge in hashtag_data['edges'])
+            # yield from (Post(self.context, edge['node']) for edge in hashtag_data['edges'])
             yield len(hashtag_data['edges'])
-            has_next_page = hashtag_data['page_info']['has_next_page']
-            if end_cursor and has_next_page:
-                print(bcolors.OKBLUE + "has next page" + bcolors.ENDC)
-                # print("end_cursor: "+str(end_cursor))
-                update_end_cursor(end_cursor,hashtag, has_next_page)
-            else:
-                update_end_cursor("",hashtag,0)
-    
+            # has_next_page = hashtag_data['page_info']['has_next_page']
+            # if end_cursor and has_next_page:
+            #     print(bcolors.OKBLUE + "has next page" + bcolors.ENDC)
+            #     # print("end_cursor: "+str(end_cursor))
+            #     update_end_cursor(end_cursor, hashtag, has_next_page)
+            # else:
+            #     update_end_cursor("",hashtag,0)
+
 
 class InstaloaderContextTommy(InstaloaderContext):
     default_user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
-    
+
     _session = ""
 
     proxies = []
@@ -125,7 +129,6 @@ class InstaloaderContextTommy(InstaloaderContext):
         print("fillproxies")
         with open("goodproxies.json","r") as file:   
             InstaloaderContextTommy.proxies = json.load(file)
-    
 
     def __init__(self, sleep: bool = True, quiet: bool = False, user_agent: Optional[str] = None,
                  max_connection_attempts: int = 3):
@@ -156,7 +159,7 @@ class InstaloaderContextTommy(InstaloaderContext):
 
         # Cache profile from id (mapping from id to Profile)
         self.profile_id_cache = dict()   
-       
+
     def proxy(self, proxiesList):
         sess = session if session else self._session
         while True:
@@ -167,8 +170,10 @@ class InstaloaderContextTommy(InstaloaderContext):
                         "http" : proxy,
                         "https" : proxy
                         }
-                # print(str(proxies))
-                ip = sess.get('https://api.ipify.org',proxies=proxies,timeout=3)
+                ip = sess.get(
+                    'https://api.ipify.org',
+                    proxies=proxies,
+                    timeout=3)
                 if ip.status_code == 200:
                     break
             except:
@@ -263,7 +268,7 @@ class InstaloaderContextTommy(InstaloaderContext):
             except KeyboardInterrupt:
                 self.error("[skipped by user]", repeat_at_end=False)
                 raise ConnectionException(error_string) from err
-    
+
 
 class TPost(Post):
     def __init__(self, context: InstaloaderContext, node: Dict[str, Any],
@@ -363,14 +368,14 @@ class TPost(Post):
                 raise PostChangedException
 
 
-def update_end_cursor(end_cursor,hashtag,has_next_page):
+def update_end_cursor(end_cursor, hashtag, has_next_page):
     inputs = (end_cursor,hashtag,has_next_page,datetime.now())
         
     sql = """ REPLACE INTO scraper_status(end_cursor,hashtag,has_next_page,update_date)
                 VALUES(?,?,?,?) """
     with Database("instagram.sqlite3") as db:
         db.execute(sql,inputs)
-    
+
 def get_end_cursor(hashtag):
     sql = """ SELECT end_cursor 
             FROM scraper_status 
@@ -381,20 +386,25 @@ def get_end_cursor(hashtag):
         end_cursor = db.fetchone()
     return end_cursor[0]
 
-def dump_page_json(filename,page,dir):
+def save_post_to_redis(page):
+    r = redis.Redis(host='localhost', port=6379, db=0)  
+    pipe = r.pipeline()
+    for edge in page['edges']:
+        post = post_dict(edge)
+        # msg = {
+        #     'scrape_date': scrape_date,
+        #     'caption': caption,
+        #     'post_id': id
+        # }
+        r.xadd("post:", post, maxlen=None)
+    pipe.execute()
+
+def dump_page_json(filename, page, dir):
         print("dump_page_json: "+str(filename)+" "+str(dir))
         filename = dir + '/' + filename+".json"
         os.makedirs(dir, exist_ok=True)        
         with open(filename, 'wt') as fp:
             json.dump(page, fp=fp, indent=4, sort_keys=True) 
-
-def get_proxy_db():
-    with Database("instagram.sqlite3") as db:
-        sql = ("""SELECT ip 
-            from proxy limit 20 """)
-        db.execute(sql)
-        proxieslist = db.fetchall()
-    return proxieslist
 
 class bcolors:
     HEADER = '\033[95m'
@@ -501,7 +511,12 @@ def extract_hashtagsOG(caption) -> List[str]:
     hashtag_regex = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
     return re.findall(hashtag_regex, caption.lower())
 
-def post_dict(post):
+def post_dict(edge):
+    # TODO: Handle empty ID
+        try:
+            id = edge['node']['id']
+        except:
+            id = ""
         try:
             likes = edge['node']['edge_liked_by']['count']
         except:
@@ -531,60 +546,11 @@ def post_dict(post):
         except:
             timestamp = ""
         scrape_date = time.time()
-        return {"likes": likes, "comments":comments,"caption":caption, 
+        return {"postId": id, "likes": likes, "comments":comments,"caption":caption, 
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
     
-def remove_stopwords(text,stopword):
-    text = [word for word in text if word not in stopword]
-    return text
 
-def extract_hashtags(caption) -> List[str]:
-    regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    tags = []
-
-    def repl(m):
-        tags.append(m.group(0))
-        return ""
-
-    caption = regexp.sub(repl, caption.lower())
-    return caption, tags
-
-
-def remove_punct(text):
-    translator = str.maketrans('', '', string.punctuation)
-    return text.translate(translator)
-
-def tokenize(text):
-    text = re.split('\W+', text)
-    return text
-
-def pre_proc_text(caption):
-    caption = re.split('\W+', caption)
-    caption, tags = extract_hashtags(post['caption'])
-    caption, mentions = extract_mentions(caption)
-    caption = remove_punct(caption)
-    caption = tokenize(caption)
-    caption = remove_stopwords(caption, stopwords)
-    caption = ' '.join(caption)
-
-    return caption
-
-def pre_proc_text_mp(post, caplist):
-    from nltk.corpus import stopwords
-    stopwords = stopwords.words('english')
-    caption = post['caption']
-    caption = re.split('\W+', caption)
-    caption, tags = extract_hashtags(post['caption'])
-    caption, mentions = extract_mentions(caption)
-    caption = remove_punct(caption)
-    caption = tokenize(caption)
-    caption = remove_stopwords(caption, stopwords)
-    caption = ' '.join(caption)
-    caplist.append(caption)
-    return caption
-
-
-def scrape(path):
+def import_posts(path):
     r = redis.Redis(host='localhost', port=6379, db=0)
     redis_key = "posts"
     processes = []
@@ -652,32 +618,20 @@ if len(sys.argv) > 1:
 start = time.time()
 
 # path = "/root/dev/scrapeimport"
-stopwords = stopwords.words('english')
-scrape(path)
-# posts = []
-# list2 = []
-# pages = []
-# processes = []
+# stopwords = stopwords.words('english')
+# import_posts(path)
 
-# for dir in os.scandir(path):
-#     for file in os.scandir(dir):
-#         with open(file, 'r') as fp:
-#             page = json.loads(fp.read())
-#             pages.append(page)
-#             for edge in page['edges']:
-#                 post = post_dict(edge)
-#                 try:
-#                     id = edge['node']['id']
-#                 except:
-#                     id = ""
-#                 proc_caption = pre_proc_text(post['caption'])
-#                 # print(proc_caption)
-#                 list2.append([id, post['caption'], proc_caption])
-               
 
 # print(len(pages))
 # print(len(list2))
 print(time.time() - start)
+with scraper:
+    for count in scraper.get_hashtag_posts(
+        "headyart", resume=True):
+        print("COUNT")
+        print(str(count))
+
+# yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
 
 # posts = manager.list()
 #     # processes = []
@@ -783,15 +737,6 @@ print(shared_list)
     # proc.join()
 
 """
-# with scraper:
-    #     for count in scraper.get_hashtag_posts("headyart",resume=True):
-    #         print("COUNT")
-    #         print(str(count))
-
-    # pool = ThreadPool(len(proxylist))
-    # goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
- 
-# yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
 
 """
 """

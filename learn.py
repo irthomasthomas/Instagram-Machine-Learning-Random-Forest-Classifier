@@ -59,12 +59,16 @@ def pre_proc_text(caption):
     def remove_stopwords(text, stopword):
         text = [word for word in text if word not in stopword]
         return text
-    
+
+    stop_words = get_stop_words('english')
+    # stop_words = stopwords.words('english')
     caption, tags = extract_hashtags(caption)
     caption, mentions = extract_mentions(caption)
     caption = remove_punct(caption)
+
     caption = tokenize(caption)
-    caption = remove_stopwords(caption, stopwords)
+    caption = remove_stopwords(caption, stop_words)
+
     caption = ' '.join(caption)
     caption = caption.rstrip()
     
@@ -156,7 +160,6 @@ def train_tf_keras(input_file):
 
 
     return model
-
 
 
 def train_tf_rfc(input_file):
@@ -287,7 +290,7 @@ def train_sk_rfc(input_file):
 
     start = time()
     stop_words = get_stop_words('english')
-
+    
     vectorizer = TfidfVectorizer(
         max_features=80, stop_words=stop_words)
     print(str(time() - start))
@@ -416,7 +419,8 @@ def predict_and_merge(input_file, output_file, sess):
 
 
 def predict(text, onx):
-    vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
+    vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
+    # vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
     # stop_words = get_stop_words('english')
 
     # vectorizer = TfidfVectorizer(
@@ -514,26 +518,32 @@ def train_models(input_file, test_file):
     print("LSVC Accuracy :", accuracy_score(y2, y2_LSVC_model))
 
 
+# take command of your life. cultivate self discipline.
+
 # input_file = "ml data - full - balanced.csv"
 # input_file = "mlOutput - testSet.csv"
 input_file = "ml data - full - biased - testSet.csv"
-stopwords = stopwords.words('english')
+# stopwords = stopwords.words('english')
 
 # input_file = "training_captions.csv"
-# classifier = train_tf_keras(input_file)
-# classifier = train_tf_rfc(input_file)
-classifier = train_sk_rfc(input_file)
+# classifier = train_sk_rfc(input_file)
 # save_to_onnx(classifier, "unbalanced_tf1.1.onnx")
     # train_models(input_file, test_file)
 
-sess = load_model_onnx("model.onnx")
+# sess = load_model_onnx("model.onnx")
+sess = load_model_onnx('/root/dev/projects/scrape/tom/unbalanced4.6.onnx')
 # output_file = "unbalanced4.6_result1.csv"
 # predict_and_merge(test_file, output_file, sess)
 
 # test_file = "ml data - full - biased - testSet1.csv"
 
-test_file = "testSet.csv"
-with open(test_file, 'r') as csvfile:
-    reader = csv.reader(csvfile)
-    for row in reader:
-        predict_tf_keras(row[2], sess)
+# sample = "signed and dated 🔥ends when I call it 💎💎Starts at $5 and $5 usd min increments ( no reserve ) 🔥🔥Free shipping in the US ($10 usd to Mexico/ Canada ) 🔥💎please tag the person you outbid 💎failure to pay within 24 hours of winning auction or erasing bids = block 💎 thanks for all the support. Good luck 🍀👍🏻 #rasetglass #glassart #glassauction  #glassofig #glass #glassofig #glassforsale #glassart #glassblowing #glass_of_ig #pendysofig #pendys"
+sample = 'Custom hand burned Shogun display box!!!💮🏯🎏🎋⛩ NFS #woodburning #colorado #boulder #woodencass #pine #woodwork #wood #japeneses #scarab #shogun #satisfying #woodart #handcarved #japeneseglass #woodworking #woodcarving #workshop #bestofglass #love #pin #katakana #woodcase #case #displaycase #engraving #dremel #woodartist #headyart #japanesestyle #srg2019'
+sample = pre_proc_text(sample)
+predict([sample], sess)
+
+# test_file = "testSet.csv"
+# with open(test_file, 'r') as csvfile:
+#     reader = csv.reader(csvfile)
+#     for row in reader:
+#         predict_tf_keras(row[2], sess)
