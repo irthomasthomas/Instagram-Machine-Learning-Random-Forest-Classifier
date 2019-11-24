@@ -32,75 +32,6 @@ import numpy as np
 # Lastly, set a key that indicates initialization has been performed
 # print('Flag initialization as done - ', end='') 
 # print(conn.set(initialized_key, 'most certainly.'))
-       
-
-def extract_hashtags(caption):
-
-    def repl(m):
-        tags.append(m.group(0))
-        return ""
-
-    regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    tags = []
-   
-    caption = regexp.sub(repl, caption.lower())
-    return caption, tags
-
-def extract_mentions(caption):
-    regexp = re.compile(r"(?:@)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    tags = []
-
-    def repl(m):
-        tags.append(m.group(0))
-        return ""
-
-    caption = regexp.sub(repl, caption.lower())
-    return caption, tags
-
-def remove_punct(text):
-    translator = str.maketrans('', '', string.punctuation)
-    return text.translate(translator)
-
-def tokenize(text):
-    text = re.split('\W+', text)
-    return text
-
-def remove_stopwords(text,stopword):
-    text = [word for word in text if word not in stopword]
-    return text
-
-def processText(x):
-    ''' clean text for processing '''
-
-    # print(str(x))
-    print(str(x['post_id']))
-    # print(str(x['caption']))
-    # stopword = stopwords.words('english')
-    stop_words = get_stop_words('english')
-    # wn = WordNetLemmatizer()
-
-    caption, tags = extract_hashtags(x['caption'])
-    # print(str(x['caption']))
-    caption, mentions = extract_mentions(caption)
-
-    caption = remove_stopwords(caption, stop_words)
-    print(caption)
-
-    caption = remove_punct(caption)
-    caption = tokenize(caption)
-    caption = ' '.join(caption)
-    print(str(caption))
-
-    # execute('hmset', x['post_id'], 'caption', caption)
-    msg = {
-            'streamId': x['streamId'],
-            'scrape_date': x['scrape_date'],
-            'caption': caption,
-            'post_id': x['post_id']
-        }
-
-    return msg
-
 
 def pre_proc_text(x):
 
@@ -133,12 +64,11 @@ def pre_proc_text(x):
     def tokenize(text):
         text = re.split('\W+', text)
         return text
-    
+
     def remove_stopwords(text, stopword):
         text = [word for word in text if word not in stopword]
         return text
-    
-    
+
     caption = x['caption']
     stopwords = get_stop_words('english')
 
@@ -162,9 +92,8 @@ def pre_proc_text(x):
 
 def runModel(x):
     ''' run onnx model '''
-    # print(str(x))
-    # print('model start')
-
+    print(str(x))
+    print('model start')
     # input_name = onx.get_inputs()[0].name # 'float_input'
     # label_name = onx.get_outputs()[0].name # 'output_label'
     input_name = 'float_input'
@@ -174,15 +103,14 @@ def runModel(x):
 
     # tensor = redisAI.createTensorFromValues(
     #     'FLOAT', 1, 80)
-    # print('vectorizer loaded')
-    # 'model:poisson1'
+    print('vectorizer loaded')
     modelRunner = rai.createModelRunner('auction:model')
-    # print('created model runner')
-
-    text = x['caption']
+    print('modelRunner set')
+    # text = x['caption']
+    text = x
+    print(text)
     X = vectorizer.transform([text]).toarray()
     print("vectorized")
-    # X = X.astype(np.float32)
     
     X_ba = bytearray(X.tobytes())
     # tensor = rai.createTensorFromValues('INT32', [1, 80], X_ba)
@@ -191,14 +119,15 @@ def runModel(x):
     rai.modelRunnerAddInput(modelRunner, input_name, tensor)
     print("add input")
     rai.modelRunnerAddOutput(modelRunner, label_name)
-    rai.modelRunnerAddOutput(modelRunner, prob_label)
+    # rai.modelRunnerAddOutput(modelRunner, prob_label)
     print("add output")
 
     model_replies = rai.modelRunnerRun(modelRunner) #error expected 2 outputs got one
     print("model replies")
-    # model_output = model_replies[0]
+    print(str(model_replies))
+    model_output = model_replies[0]
     print("model output")
-    # print(str(model_output))
+    print(str(model_output))
 
     # pred_onx = onx.run(
     #     [label_name], {input_name: X.astype(np.float32)})[0]
@@ -216,7 +145,6 @@ def runModel(x):
     # arr = np.array([1, 80])
     # tensor = rai.BlobTensor.from_numpy(arr)
     # rai.tensorset('x', tensor)
-    print("set tensor")
 
     # print(str(X))
     # X.astype(np.float32)
@@ -284,16 +212,13 @@ def printStuff(x):
 
 
 gb = GearsBuilder('StreamReader')
-# gb.map(processText)
-# gb.map(printStuff)
-
 gb.map(pre_proc_text)
-# gb.map(printStuff)
-
-# gb.map(runModel)
-# gb.map(storResults)
-
+gb.map(runModel)
 gb.register('post:')
 
+# gb.map(printStuff)
+
+# gb.map(storResults)
+
+
 # gb.map(runModel)
-# gb.register('camera:0')

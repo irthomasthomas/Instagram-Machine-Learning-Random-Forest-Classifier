@@ -1,15 +1,13 @@
 import redis
-from rq import Queue
-
+from rq import Connection, Worker
+import sys
 
 r = redis.Redis(host='localhost', port=6379, db=0)
-q = Queue(connection=r)
-redis_key = "tagqueue"
-
-def queuejob(hashtag):
-    q = Queue("scrapetag", connection=r)
-    job = q.enqueue(processimg, src_path)
-
+# redis_key = "tagqueue"
+with Connection():
+    qs = sys.argv[1:] or ["default"]
+    w = Worker(qs)
+    w.work()
 
 # scrape hashtags to redis 1
 # push to stream
