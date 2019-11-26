@@ -1,37 +1,15 @@
 import redisAI as rai
-# from nltk import WordNetLemmatizer
-# from nltk.corpus import wordnet
-# from nltk.corpus import stopwords
+import redis
 from stop_words import get_stop_words
 import re
 import string
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 import numpy as np
-# import pandas as pd
 
+vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
+conn = redis.Redis(host="localhost", port=6379, db=0)
 
-# from ml2rt import load_model
-
-# init.py 
-# input_stream_key = '{}:{}'.format(args.camera_prefix, args.camera_id)  # Input video stream key name
-# initialized_key = '{}:initialized'.format(input_stream_key)
-# conn = redis.Redis(host=url.hostname, port=url.port)
-# Check if this Redis instance had already been initialized
-    # initialized = conn.exists(initialized_key)
-    # if initialized:
-    #     print('Discovered evidence of a privious initialization - skipping.')
-    #     exit(0)
-# with open('models/tiny-yolo-voc.pb', 'rb') as f:
-        # model = f.read()
-        # res = conn.execute_command('AI.MODELSET', 'yolo:model', 'TF', args.device, 'INPUTS', 'input', 'OUTPUTS', 'output', model)
-# print('Loading gear - ', end='')
-# with open('gear.py', 'rb') as f:
-#         gear = f.read()
-#         res = conn.execute_command('RG.PYEXECUTE', gear)
-# Lastly, set a key that indicates initialization has been performed
-# print('Flag initialization as done - ', end='') 
-# print(conn.set(initialized_key, 'most certainly.'))
 
 def pre_proc_text(x):
 
@@ -71,34 +49,24 @@ def pre_proc_text(x):
 
     caption = x['caption']
     stopwords = get_stop_words('english')
-
     caption, tags = extract_hashtags(caption)
-
     caption, mentions = extract_mentions(caption)
-
     caption = remove_punct(caption)
-
     caption = tokenize(caption)
-
     caption = remove_stopwords(caption, stopwords)
-
     caption = ' '.join(caption)
     caption = caption.rstrip()
-    print(caption)
+    # print(caption)
     
-    # return [post[0], post[1], caption]
-    return caption
+    return x['streamId'], caption
 
 
 def runModel(x):
     ''' run onnx model '''
     print(str(x))
     print('model start')
-    # input_name = onx.get_inputs()[0].name # 'float_input'
-    # label_name = onx.get_outputs()[0].name # 'output_label'
     input_name = 'float_input'
     label_name = 'output_label'
-    prob_label = 'output_probability'
     vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
 
     # tensor = redisAI.createTensorFromValues(
@@ -129,80 +97,24 @@ def runModel(x):
     print("model output")
     print(str(model_output))
 
-    # pred_onx = onx.run(
-    #     [label_name], {input_name: X.astype(np.float32)})[0]
-    
-    # rai.modelRunnerAddInput(modelRunner, 'input', X_ba)
 
-    # name: Key on which tensor is saved
-    # tensor: a Tensor object
-    # shape: Shape of the tensor
-    # dtype: redisai.DType object represents data type of the tensor. 
-    # Required if input is a list/tuple
-    # rai.tensorset("tensor_test", X, [1,80], dtype=rai.DType.float)
-
-    # tensor = rai.createTensorFromValues('FLOAT', [1,80], X)
-    # arr = np.array([1, 80])
-    # tensor = rai.BlobTensor.from_numpy(arr)
-    # rai.tensorset('x', tensor)
-
-    # print(str(X))
-    # X.astype(np.float32)
-    # tensor = rai.createTensorFromValues(
-    #     'FLOAT', [1,80], X.astype(np.float32))
-    # tensor = rai.createTensorFromBlob('FLOAT', [1, 80], X.astype(np.float32))
-
-
-    # tensor = rai.Tensor.scalar(rai.DType.float, X.astype(np.float32))
-    # tensor = rai.BlobTensor.from_numpy(X.astype(np.float32))
-
-    # tensor = rai.BlobTensor.from_numpy(dummydata)
-    # pred_onx = onx.run(
-        # [label_name], {input_name: X.astype(np.float32)})[0]
-        # from ml2rt import load_model
-        # from cli import arguments
-        # tensor = BlobTensor.from_numpy(np.ones((1, 13), dtype=np.float32))
-        # model = load_model('../models/sklearn/boston_house_price_prediction/boston.onnx')
-        # con.tensorset('tensor', tensor)
-        # con.modelset('my_model', Backend.onnx, device, model)
-        # con.modelrun('my_model', inputs=['tensor'], outputs=['out'])
-        # out = con.tensorget('out', as_type=BlobTensor)
-        # print(out.to_numpy())
-        # # dummydata taken from sklearn.datasets.load_boston().data[0]
-        # dummydata = [
-        #     0.00632, 18.0, 2.31, 0.0, 0.538, 6.575, 65.2, 4.09, 1.0, 296.0, 15.3, 396.9, 4.98]
-        # tensor = rai.Tensor.scalar(rai.DType.float, *dummydata)
-        # con.tensorset("input", tensor)
-        # con.modelrun("sklearn_model", ["input"], ["output"])
-        # outtensor = con.tensorget("output", as_type=rai.BlobTensor)
-
-        # # dummydata = np.array(
-        # #     [[-0.222222, 0.5, -0.762712, -0.833333]], dtype=np.float32)
-        # # tensor = rai.BlobTensor.from_numpy(dummydata)
-        # prime_tensor = rai.Tensor(rai.DType.int64, shape=(1,), value=5)
-
-        # img = np.array(img_jpg).astype(np.float32)
-        # img = np.expand_dims(img, axis=0)
-        # img /= 256.0
-
-        # tensor = rai.BlobTensor.from_numpy(img)
-        # con.tensorset('in', tensor)
-        # con.modelrun('yolo', 'in', 'out')
-        # con.scriptrun('yolo-post', 'boxes_from_tf', inputs='out', outputs='boxes')
-        # boxes = con.tensorget('boxes', as_type=rai.BlobTensor).to_numpy()
-
-    # rai.modelRunnerAddInput(
-    #     modelRunner, 'float_input', tensor)
-    # print('model runner added inputs')
-    
-    # rai.modelRunnerAddOutput(modelRunner, 'output_label')
-    # print('model runner added inputs')
-
-    # model_replies = rai.modelRunnerRun(modelRunner)
-    # model_output = model_replies[0]    
-    # print(str(model_output))
-
-
+def runModel2(x):
+    ref, caption = x[0], x[1]
+    sample = vectorizer.transform(
+        [caption]).toarray()
+    ba = np.asarray(sample, dtype=np.float32)
+    print("ba")
+    conn.execute_command(
+        'AI.TENSORSET', 'auction:tensor', 'FLOAT',
+        '1', '80', 'BLOB', ba.tobytes())
+    print("tensor set")
+    conn.execute_command(
+        'AI.MODELRUN', 'auction:model', 'INPUTS', 'auction:tensor', 'OUTPUTS', 'out_label', 'out_probs')
+    print("model run")
+    out = conn.execute_command(
+        'AI.TENSORGET', 'out_label', 'VALUES')
+    print("tensorget")
+    print(out[2])
     
 def storeResults(x):
     ''' store to output stream '''
@@ -210,10 +122,18 @@ def storeResults(x):
 def printStuff(x):
     print(str(x))
 
-
+# .map(lambda r : str(r)) # transform a Record into a string Record
+# .foreach(
+#   lambda x: redisgears.execute_command(
+#       'set', x['value'], x['key'])) 
+# # will save value as key and key as value
+# redisgears.executeCommand('xadd', 'cats', 'MAXLEN', '~', '1000', '*', 'image', 'data:image/jpeg;base64,' + base64.b64encode(x[1]).decode('utf8'))
+# res_id = execute('XADD', 'camera:0:yolo', 'MAXLEN', '~', 1000, '*', 'ref', ref_id, 'boxes', boxes, 'people', people)
+# "postId": id, "likes": likes, "comments":comments,"caption":caption, 
+#         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
-gb.map(runModel)
+gb.map(runModel2)
 gb.register('post:')
 
 # gb.map(printStuff)
