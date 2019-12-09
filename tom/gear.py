@@ -47,6 +47,7 @@ def pre_proc_text(x):
         text = [word for word in text if word not in stopword]
         return text
 
+    print(f'pre_proc_text: x {str(x)}')
     caption = x['caption']
     stopwords = get_stop_words('english')
     caption, tags = extract_hashtags(caption)
@@ -99,28 +100,26 @@ def runModel(x):
 
 
 def runModel2(x):
+    print(f'runModel2: x {x}')
     ref, caption = x[0], x[1]
     sample = vectorizer.transform(
         [caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
-    print("ba")
     conn.execute_command(
         'AI.TENSORSET', 'auction:tensor', 'FLOAT',
         '1', '80', 'BLOB', ba.tobytes())
-    print("tensor set")
     conn.execute_command(
-        'AI.MODELRUN', 'auction:model', 'INPUTS', 'auction:tensor', 'OUTPUTS', 'out_label', 'out_probs')
-    print("model run")
+        'AI.MODELRUN', 'auction:model',
+        'INPUTS', 'auction:tensor',
+        'OUTPUTS', 'out_label', 'out_probs')
     out = conn.execute_command(
         'AI.TENSORGET', 'out_label', 'VALUES')
-    print("tensorget")
     print(out[2])
-    
-def storeResults(x):
-    ''' store to output stream '''
 
-def printStuff(x):
-    print(str(x))
+
+def storeResults(x):
+
+    ''' store to output stream '''
 
 # .map(lambda r : str(r)) # transform a Record into a string Record
 # .foreach(
@@ -134,9 +133,9 @@ def printStuff(x):
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
 gb.map(runModel2)
+# gb.map(runModel)
 gb.register('post:')
 
-# gb.map(printStuff)
 
 # gb.map(storResults)
 
