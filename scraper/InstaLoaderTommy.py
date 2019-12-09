@@ -1,37 +1,87 @@
-import lzma
-import redis
-
-from contextlib import contextmanager
-
 from instaloader import Instaloader
 from instaloader import InstaloaderContext, Post
-from instaloader.exceptions import *
-import os
-from datetime import datetime
-from typing import Any, Callable, Dict, Tuple, Iterator, List, Optional, Union
 from instaloader.structures import PostComment, PostCommentAnswer, Profile
+from instaloader.exceptions import *
 
-import random 
+from typing import Any, Callable, Dict, Tuple, Iterator, List, Optional, Union
 import requests
-import requests.utils
 import json
+import random
+import redis
 import time
-from DB import Database
-import re
-import sys
-import string
-from prometheus_client import Counter, start_http_server
 
-from multiprocessing import Process, Queue, Manager, Pool
-from multiprocessing.dummy import Pool as ThreadPool 
+def post_dict(edge):
+    # TODO: Handle empty ID
 
-import pandas as pd
-from nltk.corpus import stopwords
+        try:
+            thumbnail_src = edge['node']['thumbnail_src']
+        except:
+            print('no thumbnail_src')
+            thumbnail_src = ""
+        try:
+            imgurl = edge['node']['thumbnail_resources'][2]['src']
+        except:
+            print('ERROR: no img340 at loc: edge[node][thumbnail_resources][2][src]')
+            imgurl = ""
+        try:
+            id = edge['node']['id']
+        except:
+            id = ""
+        try:
+            likes = edge['node']['edge_liked_by']['count']
+        except:
+            print('empty')
+            likes = ""
+        try:
+            comments = edge['node']['edge_media_to_comment']['count']
+        except:
+            comments = ""
+        try:
+            caption = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
+        except:
+            caption = ""
+        try:
+            typename = edge['node']['__typename']
+        except:
+            typename = ""
+        try:
+            owner_id = edge['node']['owner']['id']
+        except:
+            owner_id = ""
+        try:
+            shortcode = edge['node']['shortcode']
+        except:
+            shortcode = ""
+        try:
+            timestamp = edge['node']['taken_at_timestamp']
+        except:
+            timestamp = ""
+        scrape_date = time.time()
+        return {"postId": id, "imgurl": imgurl, "thumbnail_src": thumbnail_src, "likes": likes, "comments":comments,"caption":caption, 
+        "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
+  
 
+def save_post_to_redis(page):
+    r = redis.Redis(host='localhost', port=6379, db=0)  
+    pipe = r.pipeline()
+    for edge in page['edges']:
+        post = post_dict(edge)
+        # msg = {
+        #     'scrape_date': scrape_date,
+        #     'caption': caption,
+        #     'post_id': id
+        # }
+        r.xadd("post:", post, maxlen=None)
+    pipe.execute()
 
 def default_user_agent() -> str:
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
            '(KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36'
+
+
+def get_end_cursor(hashtag):
+    # TODO: cursors to redis
+    return
 
 
 class InstaloaderTommy(Instaloader):
@@ -121,8 +171,6 @@ class InstaloaderTommy(Instaloader):
 class InstaloaderContextTommy(InstaloaderContext):
     default_user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
-    _session = ""
-
     proxies = []
     @staticmethod
     def fillproxies():
@@ -132,12 +180,14 @@ class InstaloaderContextTommy(InstaloaderContext):
 
     def __init__(self, sleep: bool = True, quiet: bool = False, user_agent: Optional[str] = None,
                  max_connection_attempts: int = 3):
+        # _session = self._session
+
         if not InstaloaderContextTommy.proxies:
             InstaloaderContextTommy.fillproxies()
         
         self.user_agent = user_agent if user_agent is not None else default_user_agent()
-        if not InstaloaderContextTommy._session:
-            InstaloaderContextTommy._session = self.get_anonymous_session()
+        # if not InstaloaderContextTommy._session:
+        InstaloaderContextTommy._session = self.get_anonymous_session()
 
         # self._session = self.get_anonymous_session()
         self.username = None
@@ -366,414 +416,3 @@ class TPost(Post):
             if self.shortcode != self._full_metadata_dict['shortcode']:
                 self._node.update(self._full_metadata_dict)
                 raise PostChangedException
-
-
-def update_end_cursor(end_cursor, hashtag, has_next_page):
-    inputs = (end_cursor,hashtag,has_next_page,datetime.now())
-        
-    sql = """ REPLACE INTO scraper_status(end_cursor,hashtag,has_next_page,update_date)
-                VALUES(?,?,?,?) """
-    with Database("instagram.sqlite3") as db:
-        db.execute(sql,inputs)
-
-def get_end_cursor(hashtag):
-    sql = """ SELECT end_cursor 
-            FROM scraper_status 
-            WHERE hashtag = ? 
-            LIMIT 1 """
-    with Database("instagram.sqlite3") as db:
-        db.execute(sql,(hashtag,))
-        end_cursor = db.fetchone()
-    return end_cursor[0]
-
-def save_post_to_redis(page):
-    r = redis.Redis(host='localhost', port=6379, db=0)  
-    pipe = r.pipeline()
-    for edge in page['edges']:
-        post = post_dict(edge)
-        # msg = {
-        #     'scrape_date': scrape_date,
-        #     'caption': caption,
-        #     'post_id': id
-        # }
-        r.xadd("post:", post, maxlen=None)
-    pipe.execute()
-
-def dump_page_json(filename, page, dir):
-        print("dump_page_json: "+str(filename)+" "+str(dir))
-        filename = dir + '/' + filename+".json"
-        os.makedirs(dir, exist_ok=True)        
-        with open(filename, 'wt') as fp:
-            json.dump(page, fp=fp, indent=4, sort_keys=True) 
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-def load_posts_from_dir(path):
-    for file in os.scandir(path):
-        with open(file, 'r') as fp:
-            f = fp.read()
-            resp_json = json.loads(f)
-            yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
-
-def load_post_from_file(file):
-    with open(file, 'r') as fp:
-        f = fp.read()
-        resp_json = json.loads(f)
-        yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
-
-
-def load_post_from_file_to_list(file, posts):
-    with open(file, 'r') as fp:
-        f = fp.read()
-        resp_json = json.loads(f)
-        for edge in resp_json:
-            posts.append(TPost(scraper.context, edge['node']))
-        # posts.append((TPost(scraper.context, edge['node']) for edge in resp_json['edges']))
-
-
-def load_posts_file_dir(path):
-    for file in os.scandir(path):
-        with open(file, 'r') as fp:
-            f = fp.read()
-            yield json.loads(f)
-
-def load_json_posts_file_dir(path, posts):
-    for file in os.scandir(path):
-        with open(file, 'r') as fp:
-            f = fp.read()
-            posts.append(json.loads(f))
-
-def fill_mp(pages, posts):
-    for page in pages:
-        fill_post_list(page,posts)
-
-def fill_post_list(page, posts):
-    for edge in page['edges']:
-        posts.append(TPost(scraper.context, edge['node']))
-
-def get_coms(post, shared_list):
-    count = 0
-    try:
-        for comment in post.get_comments():
-            count += 1
-            post.comments_list.append(comment)
-            # c.inc(1) 
-            # print(str(post.mediaid))
-            # print("comment: " + str(comment.text))
-            for answer in comment.answers:
-                count += 1
-                post.comments_list.append(answer)
-                # c.inc(1) 
-                # print("answer: " + str(answer.text))
-        print("comms count" + str(count))
-        # print(str(post.comments_list))
-        print("comms len: " + str(len(post.comments_list)))
-        shared_list.append(count)
-    except KeyboardInterrupt:
-        print("ctrl c")
-        exit(0)
-    except Exception as e:
-        print("exception " + str(e))
-        # continue
-
-def save_to_file(data, filename: str) -> None:
-    with lzma.open(filename, 'wt') as fp:
-            json.dump(data, fp=fp, separators=(',', ':'))
-
-
-def extract_mentions(caption) -> List[str]:
-    regexp = re.compile(r"(?:@)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    tags = []
-
-    def repl(m):
-        tags.append(m.group(0))
-        return ""
-
-    caption = regexp.sub(repl, caption.lower())
-    return caption, tags
-
-
-def extract_hashtagsOG(caption) -> List[str]:
-    """List of all lowercased hashtags (without preceeding #) that occur in the Post's caption."""
-    print("exctract_hashtags")
-    # if not self.caption:
-        # return []
-    # This regular expression is from jStassen, adjusted to use Python's \w to support Unicode
-    # http://blog.jstassen.com/2016/03/code-regex-for-instagram-username-and-hashtags/
-    hashtag_regex = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    return re.findall(hashtag_regex, caption.lower())
-
-def post_dict(edge):
-    # TODO: Handle empty ID
-        try:
-            thumbnail_src = edge['node']['thumbnail_src']
-            print(thumbnail_src)
-        except:
-            print('no thumbnail_src')
-            thumbnail_src = ""
-        try:
-            img340px = edge['node']['thumbnail_resources'][2]['src']
-            print(img340px)
-        except:
-            print('ERROR: no img340 at loc: edge[node][thumbnail_resources][2][src]')
-            img340px = ""
-        try:
-            id = edge['node']['id']
-        except:
-            id = ""
-        try:
-            likes = edge['node']['edge_liked_by']['count']
-        except:
-            likes = ""
-        try:
-            comments = edge['node']['edge_media_to_comment']['count']
-        except:
-            comments = ""
-        try:
-            caption = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
-        except:
-            caption = ""
-        try:
-            typename = edge['node']['__typename']
-        except:
-            typename = ""
-        try:
-            owner_id = edge['node']['owner']['id']
-        except:
-            owner_id = ""
-        try:
-            shortcode = edge['node']['shortcode']
-        except:
-            shortcode = ""
-        try:
-            timestamp = edge['node']['taken_at_timestamp']
-        except:
-            timestamp = ""
-        scrape_date = time.time()
-        return {"postId": id, "likes": likes, "comments":comments,"caption":caption, 
-        "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
-    
-
-def import_posts(path):
-    r = redis.Redis(host='localhost', port=6379, db=0)
-    redis_key = "posts"
-    processes = []
-    
-    for subdir, dirs, files in os.walk(path):
-        print(subdir)
-        
-    start = time.time()
-    posts2 = []
-    pipe = r.pipeline()
-    i = 0
-    for page in load_posts_file_dir(path):
-        for edge in page['edges']:
-            # post = post_dict(edge)
-            try:
-                caption = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
-            except:
-                caption = ""
-            scrape_date = time.time()
-
-            try:
-                id = edge['node']['id']
-            except:
-                id = ""
-            # caption = pre_proc_text(post['caption'])
-            msg = {
-                'scrape_date': scrape_date,
-                'caption': caption,
-                'post_id': id
-            }
-            r.xadd("post:", msg, maxlen=None)
-            # time.sleep(1)
-            i = i + 1
-            # print(str(i))
-            # xadd(name, fields, id='*', maxlen=None, approximate=True)
-            # _id = conn.xadd('camera:0', msg, maxlen=args.maxlen)
-            # 'camera:0'
-        # pipe.execute()
-        # time.sleep(2)
-        
-def print_mem_use():
-    tot_m, used_m, free_m = map(int, os.popen('free -t -m').readlines()[-1].split()[1:])
-    print("TOTAL MEM: " + str(tot_m))
-    print("USED MEM: " + str(used_m))
-    print("FREE_M: " + str(free_m))
-
-def load_post_dic(page, l):
-    for edge in page['edges']:
-        post = post_dict(edge)
-        l.append(post)
-
-
-# Export Prometheus
-commentCount = Counter('scraped_comments', 'Session Scraped Comments')
-hashtagPostCount = Counter('scraped_hashtag_posts', 'Session scraped hashtag posts')
-start_http_server(8080)
-
-# Load instagram session
-session = requests.session()
-scraper = InstaloaderTommy()
-
-if len(sys.argv) > 1:
-     path=sys.argv[1]
-
-start = time.time()
-
-# def addToStream(x):
-#     # save animal name into a new stream
-#     redisgears.executeCommand('xadd', 'cats', 'MAXLEN', '~', '1000', '*', 'image', 'data:image/jpeg;base64,' + base64.b64encode(x[1]).decode('utf8'))
-
-# def passAll(x):
-#     redisgears.executeCommand('xadd', 'all', 'MAXLEN', '~', '1000', '*', 'image', 'data:image/jpeg;base64,' + base64.b64encode(x['img']).decode('utf8'))
-
-print(time.time() - start)
-with scraper:
-    for count in scraper.get_hashtag_posts(
-        "headyart", resume=True):
-        print("COUNT")
-        print(str(count))
-
-# yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
-
-# posts = manager.list()
-#     # processes = []
-#     for page in pages:
-#         p = Process(target=fill_post_list, args=(page,posts))
-#         p.start()
-#         # processes.append(p)
-#     # for p in processes:
-#     p.join()
-#     print("posts: " + str(len(posts)))
-
-        # # print(str(post))
-        #     try:
-        #         id = edge['node']['id']
-        #     except:
-        #         id = ""
-        #     proc_caption = pre_proc_text(post['caption'])
-        #     print(proc_caption)
-        #     list2.append([id, post['caption'], proc_caption])
-
-
-# output_file2 = "/root/dev/projects/scrape/df2.csv"
-# df2 = pd.DataFrame(list2)
-# df2.to_csv(output_file2, header=False)
-# print(time.time() - start)
-
-
-# with Manager() as manager:
-#     L = manager.list()
-#     processes = []
-#     for f in files:
-#         # for post in load_post_from_file(f):
-#         p = Process(target=load_post_from_file_to_list, args=(f, L))
-#         p.start()
-#         # processes.append(p)
-#     # for p in processes:
-#         p.join()
-
-print("end")
-print(time.time() - start)
-
-#     print("posts: " + str(len(posts)))
-
-# for page in load_posts_file_dir(path):
-#     for edge in page['edges']:
-#         post = post_dict(edge)
-#         # print(str(post))
-#         try:
-#             id = edge['node']['id']
-#         except:
-#             id = ""
-#         proc_caption = pre_proc_text(post['caption'])
-#         list2.append([id, post['caption'], proc_caption])
-     
-
-# output_file2 = "/root/dev/projects/scrape/df2.csv"
-# df2 = pd.DataFrame(list2)
-# df2.to_csv(output_file2, header=False)
-# print(time.time() - start)
-
-#     start_tag = sys.argv[2]
-
-# multip fill list of posts
-""" 
-with Manager() as MPmanager:
-    posts = manager.list()
-    # processes = []
-    for page in pages:
-        p = Process(target=fill_post_list, args=(page,posts))
-        p.start()
-        # processes.append(p)
-    # for p in processes:
-    p.join()
-    print("posts: " + str(len(posts)))
- """
-
-
-    # r.lpush(redis_key, json.dump(post))
-
-# yield from (TPost(scraper.context, edge['node']) for edge in resp_json['edges'])
-
-""" 
-processes = []
-pool = Pool(50)
-manager = Manager()
-shared_list = manager.list()
-[pool.apply_async(get_coms, args=[post,shared_list]) for post in posts2 ]
-pool.close()
-pool.join()
-print("shared_list:")
-print(shared_list)
-"""
-# pool.map(get_coms, posts2,shared_list)  
-
-# for post in shared_list:
-    # print(post.mediaid)
-    # print(str(len(post.comments_list)))
-    # proc = Process(target=get_coms,args=(post,))
-    # processes.append(proc)
-    # proc.start()
-
-# for proc in processes:
-    # proc.join()
-
-"""
-
-"""
-"""
-
-if os.path.isdir(path):
-    print(str(path))
-    try:
-        for post in load_posts_from_dir(path):
-            # print(post.caption)
-            try:
-                for comment in post.get_comments():
-                    # c.inc(1) 
-                    # print(str(post.mediaid))
-                    print("comment: " + str(comment.text))
-                    for answer in comment.answers:
-                        # c.inc(1) 
-                        print("answer: " + str(answer.text))
-            except KeyboardInterrupt:
-                print("ctrl c")
-                exit(0)
-            except e:
-                print(str(e))
-                continue
-    except KeyboardInterrupt:
-        print("ctrl c")
-        exit(0)
-           
- """
