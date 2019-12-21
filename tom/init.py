@@ -6,7 +6,7 @@ if not conn.ping():
 
 # Load the RedisAI model
 print('Loading model - ', end='')
-with open('/root/dev/projects/scrape/unbalanced4.6.onnx', 'rb') as f:
+with open('/home/tommy/development/projects/scrape/unbalanced4.6.onnx', 'rb') as f:
     model = f.read()
     res = conn.execute_command('AI.MODELSET', 'auction:model', 'ONNX', 'CPU', model)
     print(res)

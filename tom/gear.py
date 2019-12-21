@@ -7,7 +7,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import pickle
 import numpy as np
 
-vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
+vectorizer = pickle.load(open("/home/tommy/development/vectorizer.pickle", "rb"))
 conn = redis.Redis(host="localhost", port=6379, db=0)
 
 
@@ -62,48 +62,37 @@ def pre_proc_text(x):
     return x['streamId'], caption
 
 
-def runModel(x):
-    ''' run onnx model '''
-    print(str(x))
-    print('model start')
-    input_name = 'float_input'
-    label_name = 'output_label'
-    vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
+# def runModel(x):
+    #     ''' run onnx model '''
+    #     print(str(x))
+    #     print('model start')
+    #     input_name = 'float_input'
+    #     label_name = 'output_label'
+    #     vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
 
-    # tensor = redisAI.createTensorFromValues(
-    #     'FLOAT', 1, 80)
-    print('vectorizer loaded')
-    modelRunner = rai.createModelRunner('auction:model')
-    print('modelRunner set')
-    # text = x['caption']
-    text = x
-    print(text)
-    X = vectorizer.transform([text]).toarray()
-    print("vectorized")
-    
-    X_ba = bytearray(X.tobytes())
-    # tensor = rai.createTensorFromValues('INT32', [1, 80], X_ba)
-    tensor = rai.createTensorFromBlob('FLOAT', [1, 80], X_ba)
-    print("tensor")
-    rai.modelRunnerAddInput(modelRunner, input_name, tensor)
-    print("add input")
-    rai.modelRunnerAddOutput(modelRunner, label_name)
-    # rai.modelRunnerAddOutput(modelRunner, prob_label)
-    print("add output")
+    #     # tensor = redisAI.createTensorFromValues(
+    #     #     'FLOAT', 1, 80)
+    #     modelRunner = rai.createModelRunner('auction:model')
+    #     # text = x['caption']
+    #     text = x
+    #     X = vectorizer.transform([text]).toarray()
+    #     print("vectorized")
+        
+    #     X_ba = bytearray(X.tobytes())
+    #     # tensor = rai.createTensorFromValues('INT32', [1, 80], X_ba)
+    #     tensor = rai.createTensorFromBlob('FLOAT', [1, 80], X_ba)
+    #     rai.modelRunnerAddInput(modelRunner, input_name, tensor)
+    #     rai.modelRunnerAddOutput(modelRunner, label_name)
+    #     # rai.modelRunnerAddOutput(modelRunner, prob_label)
 
-    model_replies = rai.modelRunnerRun(modelRunner) #error expected 2 outputs got one
-    print("model replies")
-    print(str(model_replies))
-    model_output = model_replies[0]
-    print("model output")
-    print(str(model_output))
+    #     model_replies = rai.modelRunnerRun(modelRunner) #error expected 2 outputs got one
+    #     model_output = model_replies[0]
+    #     print(str(model_output))
 
 
 def runModel2(x):
-    print(f'runModel2: x {x}')
     ref, caption = x[0], x[1]
-    sample = vectorizer.transform(
-        [caption]).toarray()
+    sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
     conn.execute_command(
         'AI.TENSORSET', 'auction:tensor', 'FLOAT',
@@ -114,22 +103,16 @@ def runModel2(x):
         'OUTPUTS', 'out_label', 'out_probs')
     out = conn.execute_command(
         'AI.TENSORGET', 'out_label', 'VALUES')
+    
     print(out[2])
 
 
 def storeResults(x):
-
     ''' store to output stream '''
+    execute('SADD', 'allposts', x['key'])
+    return x
 
-# .map(lambda r : str(r)) # transform a Record into a string Record
-# .foreach(
-#   lambda x: redisgears.execute_command(
-#       'set', x['value'], x['key'])) 
-# # will save value as key and key as value
-# redisgears.executeCommand('xadd', 'cats', 'MAXLEN', '~', '1000', '*', 'image', 'data:image/jpeg;base64,' + base64.b64encode(x[1]).decode('utf8'))
-# res_id = execute('XADD', 'camera:0:yolo', 'MAXLEN', '~', 1000, '*', 'ref', ref_id, 'boxes', boxes, 'people', people)
-# "postId": id, "likes": likes, "comments":comments,"caption":caption, 
-#         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date
+
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
 gb.map(runModel2)
