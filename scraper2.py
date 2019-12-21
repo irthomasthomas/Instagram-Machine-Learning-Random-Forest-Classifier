@@ -20,13 +20,13 @@ from DB import Database
 import re
 import sys
 import string
-from prometheus_client import Counter, start_http_server
+# from prometheus_client import Counter, start_http_server
 
 from multiprocessing import Process, Queue, Manager, Pool
 from multiprocessing.dummy import Pool as ThreadPool 
 
-import pandas as pd
-from nltk.corpus import stopwords
+# import pandas as pd
+# from nltk.corpus import stopwords
 
 
 def default_user_agent() -> str:
@@ -616,9 +616,9 @@ def load_post_dic(page, l):
 
 
 # Export Prometheus
-commentCount = Counter('scraped_comments', 'Session Scraped Comments')
-hashtagPostCount = Counter('scraped_hashtag_posts', 'Session scraped hashtag posts')
-start_http_server(8080)
+# commentCount = Counter('scraped_comments', 'Session Scraped Comments')
+# hashtagPostCount = Counter('scraped_hashtag_posts', 'Session scraped hashtag posts')
+# start_http_server(8080)
 
 # Load instagram session
 session = requests.session()
