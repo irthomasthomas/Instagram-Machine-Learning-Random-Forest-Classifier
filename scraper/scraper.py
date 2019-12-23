@@ -1,9 +1,17 @@
 from InstaLoaderTommy import InstaloaderTommy
+import redis
+r = redis.Redis(decode_responses=True)
 
-# session = requests.session()
 scraper = InstaloaderTommy()
-
-with scraper:
-    for count in scraper.get_hashtag_posts(
-        'headyart', resume=True):
-        print(f'Count: {count}')
+total = 0
+while True:
+    print('Ready! Waiting for hashtag...')
+    tag = r.brpop('tagsin')[1]
+    print(f'Received request for {tag}')
+    with scraper:
+        for count in scraper.get_hashtag_posts(
+            tag, resume=True):
+            total += count
+            print(f'scraped: {total}')
+            if total > 150:
+                break
