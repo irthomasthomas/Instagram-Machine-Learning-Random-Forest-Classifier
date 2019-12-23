@@ -20,29 +20,147 @@ object "inbound message" as m1
 object "XML Splitter" as s1
 
 ' m1 : <img:redis.png{scale=1}>
-!$ab = 'https://redislabs.com/wp-content/uploads/2017/12/redis-ml-icon.png'
-m2 : <img:data:image/png;base64,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>
-m3 : <img:https://redislabs.com/wp-content/uploads/2017/12/redis-ml-icon.png>
+' a2 : <img:$a>
 
-m3 : <img:https://d1ngwfo98ojxvt.cloudfront.net/images/blog/redis/config/config.png{scale=0.7}>
-m1 : <img:https://gbnz.gallerycdn.vsassets.io/extensions/gbnz/redis-cache-clear/1.0.11/1575472899589/Microsoft.VisualStudio.Services.Icons.Default{scale=0.8}>
-s1 : <img:https://lh5.googleusercontent.com/kXc-d7250SkyV4D0n6kPqsZ5XOhEi75vBiOBhgGjVR5Xpqh2-5NdSM3imiSpHuxxZYm8f33TVp6zgkEb1eZcd1YauL5-LMt4XT8HPUuARk3ZGIhx876Rgy2XhbMPujAdhs3FSlHy{scale=0.7}>
-s3 : <img:https://lh4.googleusercontent.com/eXHf5D0HnlZ2tFYwuSry6pUpQ0mnd_SpJ9Fi8UCrLBLshlyDU61H3H2vn1WpPlUmre2e8ffYzGHu4_zd-rA3cYH2DtCS09GVyXfEGk9_kHZqUWPIcRZYuKNdDk99GLyWYhdPPmSq{scale=0.7}>
-s2 : <img:https://redislabs.com/wp-content/uploads/2018/11/redisgraph-icon-new-2018-1.png>
-n1 : <img:https://redislabs.com/wp-content/uploads/2018/11/redisgraph-benchmark-blog-image2.png{scale=0.5}>
+' m2 : <img:>
+
+
+
 
 ' s1 : <img:redisjson.png{scale=0.65}>
-' m2 : <img:redisgear.png{scale=0.55}>
+m2 : <img:redisgear.png{scale=0.55}>
 
 m3 -> s2
 s2 -> s3
 @enduml
 
-@startuml :activty;
-participant "bob" as B
+@startuml :activity;
+skinparam component {
+    BorderColor none
+    BackgroundColor none
+    Shadowing false
+}
 
+skinparam rectangle {
+    BorderColor none
+    BackgroundColor none
+    Shadowing false
+}
+
+skinparam activity {
+    BackgroundColor transparent
+    BorderColor transparent
+    Shadowing none
+}
+
+skinparam {
+    ActivityDiamondBorderColor transparent
+    ActivityDiamondBackgroundColor transparent
+    Shadowing false
+    DefaultTextAlignment center
+
+}
+skinparam BorderColor none
+' !define ICONURL https://raw.githubusercontent.com/tupadr3/plantuml-icon-font-sprites/v2.1.0
+' !includeurl ICONURL/common.puml
+' !includeurl ICONURL/devicons/mysql.puml
+' !includeurl ICONURL/devicons/redis.puml 
+' !includeurl ICONURL/font-awesome-5/database.puml
+' !includeurl ICONURL/font-awesome-5/sort_amount_up.puml
+' !includeurl ICONURL/font-awesome-5/sort_amount_down.puml
+' !includeurl ICONURL/font-awesome-5/sort.puml
+' !includeurl ICONURL/material/queue.puml
+
+!include <tupadr3/common>
+!include <tupadr3/material/queue>
+
+
+!$gears = '<img:https://user-images.githubusercontent.com/28928495/71313236-d1c99a00-242d-11ea-9472-3e72aefe198b.png{scale=0.20}>'
+!$gear = '<img:https://user-images.githubusercontent.com/28928495/71313216-80b9a600-242d-11ea-8ed1-332511860c8c.png{scale=0.15}>'
+!$redis = '<img:https://user-images.githubusercontent.com/28928495/71313246-fde51b00-242d-11ea-8c0f-e2d771c26315.png{scale=0.3}>'
+!$stream = '<img:https://user-images.githubusercontent.com/28928495/71313279-43a1e380-242e-11ea-9f7c-873b8788893b.png{scale=0.10}>'
+!$TS = '<img:https://user-images.githubusercontent.com/28928495/71313314-cd51b100-242e-11ea-9ceb-a50b6464a398.png{scale=0.15}>'
+!$json = '<img:https://user-images.githubusercontent.com/28928495/71312690-9c20b300-2425-11ea-8606-300a95b4e3ac.png{scale=0.20}>'
+!$bloom = '<img:https://user-images.githubusercontent.com/28928495/71313199-418b5500-242d-11ea-9dfc-b3fd6252111e.png{scale=0.40}>'
+!$graph = '<img:https://user-images.githubusercontent.com/28928495/71320280-f14dda80-24a0-11ea-9aa5-105b915010a4.png{scale=0.30}>'
+!$search = '<img:https://user-images.githubusercontent.com/28928495/71320310-63beba80-24a1-11ea-9d7b-85823a59e2f9.png{scale=0.20}>'
+!$reddisk = '<img:https://user-images.githubusercontent.com/28928495/71320331-c021da00-24a1-11ea-9034-296325036749.png{scale=0.20}>'
+!$redisblack = '<img:https://user-images.githubusercontent.com/28928495/71323736-7ac7d180-24ce-11ea-8aa8-70f159a88d06.png{scale=0.05}>'
+' DEV_REDIS(redis)
+' FA5_SORT(alias)
+' FA5_SORT_AMOUNT_UP(alis)
+' FA5_SORT_AMOUNT_DOWN(b)
+
+' User Enter Hashtag
+' Redirect user to website/tags/$hashtag
+' LPUSH tag
+' If tag exists then getNewPosts()
+' Else addNewTag()
+' 
+
+MATERIAL_QUEUE(a1, LPUSH)
+note right: Enter hashtag
+
+MATERIAL_QUEUE(a2, LPOP)
+[$redisblack] as asd
+a1 <--> asd
+a2 <-- asd
+
+' $redisblack
+
+' e;
+' -> You can put text in arrows;
+' if ($stream) then
+'     -[#blue]->
+'     :foo2;
+'     -[#green,dashed]-> The text can
+'     also be on several lines
+'     and **very** long...;
+'     :foo3;
+' else
+'     -[#black,dotted]->
+'     :foo4;
+' endif
+' -[#gray,bold]->
+' :foo5;
+
+
+@enduml
+
+@startuml
+' PlantUML stdlib now includes Icon-Font Sprites! See https://github.com/tupadr3/plantuml-icon-font-sprites
+
+!include <tupadr3/common>
+!include <tupadr3/font-awesome/server>
+!include <tupadr3/font-awesome/database>
+!include <tupadr3/material/queue>
+
+title Styling example
+
+FA_SERVER(web1,web1) #Green
+FA_SERVER(web2,web2) #Yellow
+FA_SERVER(web3,web3) #Blue
+FA_SERVER(web4,web4) #YellowGreen
+
+FA_DATABASE(db1,LIVE,database,white) #RoyalBlue
+FA_DATABASE(db2,SPARE,database) #Red
+
+
+MATERIAL_QUEUE(q1,queue1)
+
+db1 <--> db2
+
+web1 <--> db1
+web2 <--> db1
+web3 <--> db1
+web4 <--> db1
+@enduml
+
+@startuml :activty;
+!$ab = "fook"
+!$img1 = "https://d1ngwfo98ojxvt.cloudfront.net/images/blog/redis/config/config.png"
 (*) --> "Initialization"
-if "Some Test" then
+if $ab then
     -->[true] "Some Activity"
     --> "Another activty"
     -right-> (*)
@@ -60,7 +178,7 @@ endif
 @startuml
 :Start;
 if (Tag exsists?) then (yes)
-    :process all\ndiagrams;
+    :process all;
 else (no)
     :process only
     __sequence__ and __activity__ diagrams;
