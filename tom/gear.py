@@ -46,8 +46,7 @@ def pre_proc_text(x):
     def remove_stopwords(text, stopword):
         text = [word for word in text if word not in stopword]
         return text
-
-    print(f'pre_proc_text: x {str(x)}')
+    # print(f'pre_proc_text: x {str(x)}')
     caption = x['caption']
     stopwords = get_stop_words('english')
     caption, tags = extract_hashtags(caption)
@@ -91,6 +90,7 @@ def pre_proc_text(x):
 
 
 def runModel2(x):
+    # print(f'runModel: {x}')
     ref, caption = x[0], x[1]
     sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
@@ -103,9 +103,9 @@ def runModel2(x):
         'OUTPUTS', 'out_label', 'out_probs')
     out = conn.execute_command(
         'AI.TENSORGET', 'out_label', 'VALUES')
+    print(out[2][0])
+    return out[2][0]
     
-    print(out[2])
-
 
 def storeResults(x):
     ''' store to output stream '''
@@ -113,10 +113,14 @@ def storeResults(x):
     return x
 
 
+def printx(x):
+    print(f'X: {x}')
+
+
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
-gb.map(runModel2)
-# gb.map(runModel)
+gb.filter(runModel2)
+gb.map(printx)
 gb.register('post:')
 
 

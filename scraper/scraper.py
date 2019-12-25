@@ -9,9 +9,9 @@ while True:
     tag = r.brpop('tagsin')[1]
     print(f'Received request for {tag}')
     with scraper:
-        for count in scraper.get_hashtag_posts(
-            tag, resume=True):
+        for count in scraper.get_hashtag_posts(tag, resume=True):
             total += count
             print(f'scraped: {total}')
-            if total > 150:
+            if total > 200:
+                total = 0
                 break
