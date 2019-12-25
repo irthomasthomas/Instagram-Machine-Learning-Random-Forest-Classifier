@@ -8,7 +8,8 @@ if not conn.ping():
 print('Loading model - ', end='')
 with open('/home/tommy/development/projects/scrape/unbalanced4.6.onnx', 'rb') as f:
     model = f.read()
-    res = conn.execute_command('AI.MODELSET', 'auction:model', 'ONNX', 'CPU', model)
+    res = conn.execute_command(
+        'AI.MODELSET', 'auction:model', 'ONNX', 'CPU', model)
     print(res)
 
 initialized_key = '{}:initialized'.format('post:')
