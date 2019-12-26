@@ -58,7 +58,7 @@ def pre_proc_text(x):
     caption = caption.rstrip()
     # print(caption)
     
-    return x['streamId'], caption
+    return x, caption
 
 
 # def runModel(x):
@@ -88,10 +88,11 @@ def pre_proc_text(x):
     #     model_output = model_replies[0]
     #     print(str(model_output))
 
+# Todo: 
 
 def runModel2(x):
     # print(f'runModel: {x}')
-    ref, caption = x[0], x[1]
+    stream, caption = x[0], x[1]
     sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
     conn.execute_command(
@@ -103,9 +104,8 @@ def runModel2(x):
         'OUTPUTS', 'out_label', 'out_probs')
     out = conn.execute_command(
         'AI.TENSORGET', 'out_label', 'VALUES')
-    print(out[2][0])
     return out[2][0]
-    
+
 
 def storeResults(x):
     ''' store to output stream '''
@@ -120,7 +120,7 @@ def printx(x):
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
 gb.filter(runModel2)
-gb.map(printx)
+gb.foreach(printx)
 gb.register('post:')
 
 
@@ -128,3 +128,4 @@ gb.register('post:')
 
 
 # gb.map(runModel)
+
