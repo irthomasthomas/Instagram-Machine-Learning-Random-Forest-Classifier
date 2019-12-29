@@ -13,5 +13,6 @@ while True:
             tag, resume=True):
             total += count
             print(f'scraped: {total}')
-            if total > 170:
+            if total > 1070:
+                total = 0
                 break

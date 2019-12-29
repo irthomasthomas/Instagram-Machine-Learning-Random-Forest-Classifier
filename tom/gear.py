@@ -88,7 +88,7 @@ def pre_proc_text(x):
     #     model_output = model_replies[0]
     #     print(str(model_output))
 
-# Todo: 
+# Todo: asd
 
 def runModel2(x):
     # print(f'runModel: {x}')
@@ -109,8 +109,14 @@ def runModel2(x):
 
 def storeResults(x):
     ''' store to output stream '''
-    execute('SADD', 'allposts', x['key'])
-    return x
+    print(x[0]['rootTag'])
+    print(x[0]['postId'])
+    print(x[0]['imgUrl'])
+
+    hashName = 'igAd:' + x[0]['postId']
+    streamKey = 'tags:out:' + x[0]['rootTag']
+    execute('SADD', 'trackedTags', x[0]['rootTag'])
+    execute('XADD', streamKey, 'MAXLEN', '~', 1000, '*', 'streamId', x[0]['streamId'], 'imgUrl', x[0]['imgUrl'])
 
 
 def printx(x):
@@ -120,12 +126,5 @@ def printx(x):
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
 gb.filter(runModel2)
-gb.foreach(printx)
+gb.foreach(storeResults)
 gb.register('post:')
-
-
-# gb.map(storResults)
-
-
-# gb.map(runModel)
-
