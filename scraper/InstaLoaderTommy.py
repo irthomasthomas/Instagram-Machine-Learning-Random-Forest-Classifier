@@ -11,20 +11,11 @@ import redis
 import time
 import re
 
+r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+
+
 def post_dict(edge, hashtag):
     # TODO: Handle empty ID
-
-        # try:
-        #     thumbnail_src = edge['node']['thumbnail_src']
-        #     print(f'thumb: {thumbnail_src}')
-        # except:
-        #     print('no thumbnail_src')
-        #     thumbnail_src = ""
-        # try:
-            # imgurl = edge['node']['thumbnail_resources'][2]['src']
-        # except:
-            # print('ERROR: no img340 at loc: edge[node][thumbnail_resources][2][src]')
-            # imgurl = ""
         try:
             id = edge['node']['id']
         except:
@@ -68,7 +59,6 @@ def post_dict(edge, hashtag):
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
 
 def save_post_to_redis(page, hashtag):
-    r = redis.Redis(host='localhost', port=6379, db=0)  
     pipe = r.pipeline()
     for edge in page['edges']:
         post = post_dict(edge, hashtag)
@@ -171,15 +161,14 @@ class InstaloaderContextTommy(InstaloaderContext):
     proxies = []
     @staticmethod
     def fillproxies():
-        with open("goodproxies.json","r") as file:   
-            InstaloaderContextTommy.proxies = json.load(file)
+        InstaloaderContextTommy.proxies = r.zrange('proxies:',0, -1)
 
     def __init__(self, sleep: bool = True, quiet: bool = False, user_agent: Optional[str] = None,
                  max_connection_attempts: int = 3):
         # _session = self._session
 
-        # if not InstaloaderContextTommy.proxies:
-            # InstaloaderContextTommy.fillproxies()
+        if not InstaloaderContextTommy.proxies:
+            InstaloaderContextTommy.fillproxies()
         
         self.user_agent = user_agent if user_agent is not None else default_user_agent()
         # if not InstaloaderContextTommy._session:
@@ -208,6 +197,7 @@ class InstaloaderContextTommy(InstaloaderContext):
 
     def proxy(self, proxiesList):
         # sess = session if session else self._session
+        # zrange 1 1  / zrem
         while True:
             try:
                 proxy = random.choice(proxiesList)
@@ -241,12 +231,10 @@ class InstaloaderContextTommy(InstaloaderContext):
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
         is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
-        # proxies = self.proxy(self.proxies)
-        # proxy = random.choice(self.proxies)
-        # proxy = f'{proxy[0]}:{proxy[1]}' 
-        proxies = {
-            "https" : '127.0.0.1:8888'
-            }                
+ 
+        fast_proxy = r.zrange('proxies:',1, 1)[0]
+        print(f'FAST_PROXY 1: {fast_proxy}')
+        proxies = {"https" : fast_proxy}
         try:
             for attempt_no in range(100):
                 resp = sess.get(f'https://{host}/{path}',
@@ -270,19 +258,37 @@ class InstaloaderContextTommy(InstaloaderContext):
                     # time.sleep(3)
                 if resp.status_code != 200:
                     print("status code: " + str(resp.status_code))
+                    r.zrem('proxies:', fast_proxy)
+                    fast_proxy = r.zrange('proxies:',1, 1)[0]
+                    print(f'FAST_PROXY: {fast_proxy}')
+                    proxies = {"https" : fast_proxy}
                     continue
                 is_html_query = not is_graphql_query and not "__a" in params and host == "www.instagram.com"
                 if is_html_query:
                     match = re.search(r'window\._sharedData = (.*);</script>', resp.text)
                     if match is None:
+                        r.zrem('proxies:', fast_proxy)
+                        fast_proxy = r.zrange('proxies:',1, 1)[0]
+                        print(f'FAST_PROXY: {fast_proxy}')
+                        proxies = {"https" : fast_proxy}
                         continue
                     return json.loads(match.group(1))
                 else:
                     resp_json = resp.json()
                 if 'status' in resp_json and resp_json['status'] != "ok":
                     if 'message' in resp_json:
+                        print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
+                        r.zrem('proxies:', fast_proxy)
+                        fast_proxy = r.zrange('proxies:',1, 1)[0]
+                        print(f'FAST_PROXY: {fast_proxy}')
+                        proxies = {"https" : fast_proxy}
                         continue
                     else:
+                        print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
+                        r.zrem('proxies:', fast_proxy)
+                        fast_proxy = r.zrange('proxies:',1, 1)[0]
+                        print(f'FAST_PROXY: {fast_proxy}')
+                        proxies = {"https" : fast_proxy}
                         continue
                 return resp_json
                     
@@ -292,9 +298,11 @@ class InstaloaderContextTommy(InstaloaderContext):
         except (ConnectionException, json.decoder.JSONDecodeError, requests.exceptions.RequestException) as err:           
             error_string = f'JSON Query to {path}: {err}'
             if _attempt == self.max_connection_attempts:
-                print(f'_attempt {_attempt} max_connection_attempts {self.max_connection_attempts}')
-                # proxies = self.proxy(self.proxies)
-                # raise ConnectionException(error_string) from err
+                print(f'_attempt {_attempt} attempt_no: {attempt_no} max_connection_attempts {self.max_connection_attempts}')
+                r.zrem('proxies:', fast_proxy)
+                fast_proxy = r.zrange('proxies:',1, 1)[0]
+                print(f'FAST_PROXY: {fast_proxy}')
+                proxies = {"https" : fast_proxy}
             self.error(error_string + " [retrying; skip with ^C]", repeat_at_end=False)
             try:
                 if is_graphql_query and isinstance(err, TooManyRequestsException):
