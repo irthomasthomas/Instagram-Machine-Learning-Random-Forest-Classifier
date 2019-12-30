@@ -18,7 +18,7 @@ def pre_proc_text(x):
         tags = []
 
         def repl(m):
-            tags.append(m.group(0))
+            tags.append(m.group(0)[1:])
             return ""
 
         caption = regexp.sub(repl, caption.lower())
@@ -33,7 +33,7 @@ def pre_proc_text(x):
             return ""
 
         caption = regexp.sub(repl, caption.lower())
-        return caption, tags
+        return caption
 
     def remove_punct(text):
         translator = str.maketrans('', '', string.punctuation)
@@ -46,11 +46,12 @@ def pre_proc_text(x):
     def remove_stopwords(text, stopword):
         text = [word for word in text if word not in stopword]
         return text
-    # print(f'pre_proc_text: x {str(x)}')
+
     caption = x['caption']
     stopwords = get_stop_words('english')
     caption, tags = extract_hashtags(caption)
-    caption, mentions = extract_mentions(caption)
+
+    caption = extract_mentions(caption)
     caption = remove_punct(caption)
     caption = tokenize(caption)
     caption = remove_stopwords(caption, stopwords)
@@ -58,7 +59,7 @@ def pre_proc_text(x):
     caption = caption.rstrip()
     # print(caption)
     
-    return x, caption
+    return x, caption, tags
 
 
 # def runModel(x):
@@ -92,7 +93,7 @@ def pre_proc_text(x):
 
 def runModel2(x):
     # print(f'runModel: {x}')
-    stream, caption = x[0], x[1]
+    caption = x[1]
     sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
     conn.execute_command(
@@ -109,15 +110,13 @@ def runModel2(x):
 
 def storeResults(x):
     ''' store to output stream '''
-    print(x[0]['rootTag'])
-    print(x[0]['postId'])
-    print(x[0]['imgUrl'])
-
-    hashName = 'igAd:' + x[0]['postId']
     streamKey = 'tags:out:' + x[0]['rootTag']
     execute('SADD', 'trackedTags', x[0]['rootTag'])
-    execute('XADD', streamKey, 'MAXLEN', '~', 1000, '*', 'streamId', x[0]['streamId'], 'imgUrl', x[0]['imgUrl'])
-
+    execute('XADD', streamKey, 'MAXLEN', '~', 5000, '*', 'streamId', x[0]['streamId'], 'imgUrl', x[0]['imgUrl'])
+    key = 'post:tags:' + str(x[0]['postId'])
+    execute('SADD', key, *x[2])
+    for tag in x[2]:
+        execute('SADD', 'tag:posts:'+tag, x[0]['postId'])
 
 def printx(x):
     print(f'X: {x}')
