@@ -626,7 +626,7 @@ def starts(path):
             except:
                 continue
         
-        
+                # TODO: Set Hashtags
                 #     c = 0
             #     hashtags = extract_hashtags_og(post['caption'])
             #     # hashtags = extract_hashtags(post['caption'])
@@ -642,6 +642,7 @@ def starts(path):
                 #     print(tag)
            
             # id = ""
+            
         # print("tm to fill pipe: " + str(time.perf_counter() - start))
     pipe.execute()
    

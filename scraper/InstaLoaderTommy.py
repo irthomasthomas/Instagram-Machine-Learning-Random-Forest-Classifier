@@ -62,7 +62,7 @@ def save_post_to_redis(page, hashtag):
     pipe = r.pipeline()
     for edge in page['edges']:
         post = post_dict(edge, hashtag)
-        r.xadd("post:", post, maxlen=None)
+        r.xadd("post:", post, maxlen=5000)
     pipe.execute()
 
 def default_user_agent() -> str:
@@ -79,6 +79,7 @@ class InstaloaderTommy(Instaloader):
         super().__init__('Instaloader')
         self.context = InstaloaderContextTommy()
         self.download_comments=True
+        print("InstaloaderTommy Inint")
 
     def update_comments(self, filename: str, post: Post) -> None:
         print("NEW update_comments")
@@ -128,6 +129,7 @@ class InstaloaderTommy(Instaloader):
 
     def get_hashtag_posts(self, hashtag: str, resume=False, end_cursor=False) -> Iterator[Post]:
         """Get Posts associated with a #hashtag."""
+        print("GET_HASHTAG_POSTS()")
         has_next_page = True
         if resume:
             end_cursor = False
@@ -137,7 +139,6 @@ class InstaloaderTommy(Instaloader):
                 params = {'__a': 1, 'max_id': end_cursor}
             else:
                 params = {'__a': 1}
-            print(f'explore/tags/{hashtag}/')
             hashtag_data = self.context.get_json(
                 f'explore/tags/{hashtag}/',
                 params)['graphql']['hashtag']['edge_hashtag_to_media']       
@@ -147,12 +148,6 @@ class InstaloaderTommy(Instaloader):
             save_post_to_redis(hashtag_data, hashtag)
             yield len(hashtag_data['edges'])
             has_next_page = hashtag_data['page_info']['has_next_page']
-            # if end_cursor and has_next_page:
-            #     print(bcolors.OKBLUE + "has next page" + bcolors.ENDC)
-            #     # print("end_cursor: "+str(end_cursor))
-            #     update_end_cursor(end_cursor, hashtag, has_next_page)
-            # else:
-            #     update_end_cursor("",hashtag,0)
 
 
 class InstaloaderContextTommy(InstaloaderContext):
@@ -161,14 +156,18 @@ class InstaloaderContextTommy(InstaloaderContext):
     proxies = []
     @staticmethod
     def fillproxies():
+        print('FILLPROXIES()')
         InstaloaderContextTommy.proxies = r.zrange('proxies:',0, -1)
 
     def __init__(self, sleep: bool = True, quiet: bool = False, user_agent: Optional[str] = None,
                  max_connection_attempts: int = 3):
-        # _session = self._session
+        print("CONTEXT INIT")
+        self.proxy = r.zrange('proxies:',1, 1)[0]
+        proxies = {"https" : self.proxy}
+        self.proxies = proxies
 
-        if not InstaloaderContextTommy.proxies:
-            InstaloaderContextTommy.fillproxies()
+        # if not InstaloaderContextTommy.proxies:
+        #     InstaloaderContextTommy.fillproxies()
         
         self.user_agent = user_agent if user_agent is not None else default_user_agent()
         # if not InstaloaderContextTommy._session:
@@ -195,23 +194,11 @@ class InstaloaderContextTommy(InstaloaderContext):
         # Cache profile from id (mapping from id to Profile)
         self.profile_id_cache = dict()   
 
-    def proxy(self, proxiesList):
-        # sess = session if session else self._session
-        # zrange 1 1  / zrem
-        while True:
-            try:
-                proxy = random.choice(proxiesList)
-                proxy = proxy[0] + ":" + proxy[1]
-                proxies = {
-                        "http" : proxy,
-                        "https" : proxy
-                        }
-                break
-
-            except:
-                continue
-        # print('Proxy IP is:'+str(ip.text))
-        # print(f'Proxy IP: {proxies}')
+    def change_proxy(self, dead_proxy):
+        '''Delete proxy and get new proxy'''
+        r.zrem('proxies:', dead_proxy)
+        self.proxy = r.zrange('proxies:',1, 1)[0]        
+        proxies = {"https" : self.proxy}
         return proxies
 
     def get_json(self, path: str, params: Dict[str, Any], host: str = 'www.instagram.com',
@@ -227,50 +214,39 @@ class InstaloaderContextTommy(InstaloaderContext):
         :raises QueryReturnedNotFoundException: When the server responds with a 404.
         :raises ConnectionException: When query repeatedly failed.
         """
-
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
-        is_iphone_query = host == 'i.instagram.com'
+        # is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
- 
-        fast_proxy = r.zrange('proxies:',1, 1)[0]
-        print(f'FAST_PROXY 1: {fast_proxy}')
-        proxies = {"https" : fast_proxy}
-        try:
-            for attempt_no in range(100):
+        proxies = self.proxies
+        # print(f'get_json proxies: {proxies}')
+        for attempt_no in range(30):
+            try:
                 resp = sess.get(f'https://{host}/{path}',
-                    proxies=proxies, params=params, allow_redirects=True, timeout=3)
-                
+                    proxies=proxies, params=params, allow_redirects=False, timeout=3)
                 while resp.is_redirect:
+                    print("redirect")
                     redirect_url = resp.headers['location']
                     if redirect_url.startswith(f'https://{host}/'):
                         resp = sess.get(redirect_url if redirect_url.endswith('/') else redirect_url + '/',
-                                        proxies=proxies, params=params, allow_redirects=False, timeout=4)
+                                        proxies=proxies, params=params, allow_redirects=False, timeout=3)
                     else:
                         break
                 if resp.status_code == 400:
                     print("error 400")
                 if resp.status_code == 404:
                     print("error 404")
-                    raise QueryReturnedNotFoundException("404 Not Found")
-                     
+                    # raise QueryReturnedNotFoundException("404 Not Found")
                 if resp.status_code == 429:
                     print("TEST error 429: too many requests")
-                    # time.sleep(3)
                 if resp.status_code != 200:
-                    print("status code: " + str(resp.status_code))
-                    r.zrem('proxies:', fast_proxy)
-                    fast_proxy = r.zrange('proxies:',1, 1)[0]
-                    print(f'FAST_PROXY: {fast_proxy}')
-                    proxies = {"https" : fast_proxy}
+                    print(f'status code: {str(resp.status_code)} proxy:{proxies}')
+                    proxies = self.change_proxy(self.proxy)
                     continue
                 is_html_query = not is_graphql_query and not "__a" in params and host == "www.instagram.com"
                 if is_html_query:
                     match = re.search(r'window\._sharedData = (.*);</script>', resp.text)
                     if match is None:
-                        r.zrem('proxies:', fast_proxy)
-                        fast_proxy = r.zrange('proxies:',1, 1)[0]
-                        print(f'FAST_PROXY: {fast_proxy}')
-                        proxies = {"https" : fast_proxy}
+                        proxies = self.change_proxy(self.proxy)
                         continue
                     return json.loads(match.group(1))
                 else:
@@ -278,41 +254,42 @@ class InstaloaderContextTommy(InstaloaderContext):
                 if 'status' in resp_json and resp_json['status'] != "ok":
                     if 'message' in resp_json:
                         print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        r.zrem('proxies:', fast_proxy)
-                        fast_proxy = r.zrange('proxies:',1, 1)[0]
-                        print(f'FAST_PROXY: {fast_proxy}')
-                        proxies = {"https" : fast_proxy}
+                        proxies = self.change_proxy(self.proxy)
                         continue
                     else:
                         print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        r.zrem('proxies:', fast_proxy)
-                        fast_proxy = r.zrange('proxies:',1, 1)[0]
-                        print(f'FAST_PROXY: {fast_proxy}')
-                        proxies = {"https" : fast_proxy}
+                        proxies = self.change_proxy(self.proxy)
                         continue
                 return resp_json
-                    
-        except QueryReturnedNotFoundException as err:
-            raise err
-
-        except (ConnectionException, json.decoder.JSONDecodeError, requests.exceptions.RequestException) as err:           
-            error_string = f'JSON Query to {path}: {err}'
-            if _attempt == self.max_connection_attempts:
-                print(f'_attempt {_attempt} attempt_no: {attempt_no} max_connection_attempts {self.max_connection_attempts}')
-                r.zrem('proxies:', fast_proxy)
-                fast_proxy = r.zrange('proxies:',1, 1)[0]
-                print(f'FAST_PROXY: {fast_proxy}')
-                proxies = {"https" : fast_proxy}
-            self.error(error_string + " [retrying; skip with ^C]", repeat_at_end=False)
-            try:
-                if is_graphql_query and isinstance(err, TooManyRequestsException):
-                    self._ratecontrol_graphql_query(params['query_hash'], untracked_queries=True)
-                if is_iphone_query and isinstance(err, TooManyRequestsException):
-                    self._ratecontrol_graphql_query('iphone', untracked_queries=True)
-                return self.get_json(path=path, params=params, host=host, session=sess, _attempt=_attempt + 1)
-            except KeyboardInterrupt:
+            
+            except KeyboardInterrupt as err:
+                error_string = f'JSON Query to {path}: {err}'
                 self.error("[skipped by user]", repeat_at_end=False)
                 raise ConnectionException(error_string) from err
+            except:
+                print(f'error: attemp: {attempt_no}')
+                print(proxies)
+                proxies = self.change_proxy(self.proxy)
+                continue
+
+        # except QueryReturnedNotFoundException as err:
+        #     raise err
+
+        # except (ConnectionException, json.decoder.JSONDecodeError, requests.exceptions.RequestException) as err:           
+        #     error_string = f'JSON Query to {path}: {err}'
+        #     if _attempt == self.max_connection_attempts:
+        #         print(f'_attempt {_attempt} attempt_no: {attempt_no} max_connection_attempts {self.max_connection_attempts}')
+        #         proxies = self.change_proxy(self.proxy)
+        #     self.error(error_string + " [retrying; skip with ^C]", repeat_at_end=False)
+        #     try:
+        #         if is_graphql_query and isinstance(err, TooManyRequestsException):
+        #             self._ratecontrol_graphql_query(params['query_hash'], untracked_queries=True)
+        #         # if is_iphone_query and isinstance(err, TooManyRequestsException):
+        #             # self._ratecontrol_graphql_query('iphone', untracked_queries=True)
+        #         return self.get_json(path=path, params=params, host=host, session=sess, _attempt=_attempt + 1)
+            # except KeyboardInterrupt:
+            #     self.error("[skipped by user]", repeat_at_end=False)
+            #     raise ConnectionException(error_string) from err
 
 
 class TPost(Post):
