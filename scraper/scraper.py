@@ -6,7 +6,8 @@ from multiprocessing import Process
 r = redis.Redis(decode_responses=True)
 
 scraper = InstaloaderTommy()
-
+# TODO: CHECK TIME SINCE SCRAPE
+# TODO: ADD ALL BLOOM / CUCKOO FILTER
 
 def scrape(tag):
     with scraper:
@@ -29,5 +30,5 @@ while True:
     end = time.perf_counter()
     print(f'TIMER: {end - start}')
 
-
+# TODO: check if tag has been recently scraped.
     
