@@ -238,6 +238,8 @@ class InstaloaderContextTommy(InstaloaderContext):
                     # raise QueryReturnedNotFoundException("404 Not Found")
                 if resp.status_code == 429:
                     print("TEST error 429: too many requests")
+                    proxies = self.change_proxy(self.proxy)
+                    continue
                 if resp.status_code != 200:
                     print(f'status code: {str(resp.status_code)} proxy:{proxies}')
                     proxies = self.change_proxy(self.proxy)

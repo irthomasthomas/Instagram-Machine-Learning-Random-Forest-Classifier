@@ -114,6 +114,8 @@ def storeResults(x):
     execute('SADD', 'trackedTags', x[0]['rootTag'])
     execute('XADD', streamKey, 'MAXLEN', '~', 5000, '*', 'streamId', x[0]['streamId'], 'imgUrl', x[0]['imgUrl'])
     key = 'post:tags:' + str(x[0]['postId'])
+    # redis.lpush('foo', *[1,2,3,4,5,6,7,8,9]) # https://stackoverflow.com/questions/15850112/redis-how-to-parse-a-list-result
+
     execute('SADD', key, *x[2])
     for tag in x[2]:
         execute('SADD', 'tag:posts:'+tag, x[0]['postId'])
@@ -127,3 +129,4 @@ gb.map(pre_proc_text)
 gb.filter(runModel2)
 gb.foreach(storeResults)
 gb.register('post:')
+# TODO: add a key when there are 10+ results 
