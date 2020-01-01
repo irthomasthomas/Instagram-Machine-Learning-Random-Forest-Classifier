@@ -110,18 +110,11 @@ def runModel2(x):
 
 def storeResults(x):
     ''' store to output stream '''
-    tag = x[0]['rootTag']
-    streamKey = 'tags:out:' + tag
-    execute('SADD', 'trackedTags', tag)
-    shortcode = x[0]['shortcode']
-    link = f'https://www.instagram.com/p/{shortcode}'
-    execute('XADD', streamKey,
-        'MAXLEN', '~', 5000, '*',
-        'streamId', x[0]['streamId'],
-        'imgUrl', x[0]['imgUrl'],
-        'link', link) 
-    execute('topk.add', 'top10tags', tag)
-    # key = 'post:tags:' + str(x[0]['postId'])
+    streamKey = 'tags:out:' + x[0]['rootTag']
+    execute('SADD', 'trackedTags', x[0]['rootTag'])
+    execute('XADD', streamKey, 'MAXLEN', '~', 5000, '*', 'streamId', x[0]['streamId'], 'imgUrl', x[0]['imgUrl'])
+    
+    key = 'post:tags:' + str(x[0]['postId'])
     # redis.lpush('foo', *[1,2,3,4,5,6,7,8,9]) # https://stackoverflow.com/questions/15850112/redis-how-to-parse-a-list-result
 
 def printx(x):

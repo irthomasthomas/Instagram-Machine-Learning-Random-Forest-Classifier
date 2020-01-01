@@ -31,10 +31,14 @@ async def show(proxies):
             print(f'{proxy} time: {timing}')
             result = r.zadd('proxies:', {ip: timing})
             print(result)
+            print(time.strftime('%X %x %Z'))
+
         except:
+            print(time.strftime('%X %x %Z'))
             print(f'Rejected: {proxy}')
-            result = r.zrem('proxies:', ip)
-            print(result)
+            # result = r.zrem('proxies:', ip)
+            # print(result)
+            
             continue
         # print(f'Found proxy: {proxy}')
         # zpopmin / zrem
@@ -44,7 +48,7 @@ def main():
     proxies = asyncio.Queue()
     broker = Broker(proxies, timeout=3)
     tasks = asyncio.gather(
-        broker.find(types=['HTTPS']),
+        broker.find(types=['HTTPS', 'HTTP']),
         show(proxies))
     loop = asyncio.get_event_loop()
     loop.run_until_complete(tasks)

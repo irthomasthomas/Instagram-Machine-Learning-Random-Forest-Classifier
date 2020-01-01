@@ -7,15 +7,15 @@ from typing import Any, Callable, Dict, Tuple, Iterator, List, Optional, Union
 import requests
 import json
 import random
-import redis
+from redis import Redis
 import time
 import re
 
-r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+rdb = Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 
 def post_dict(edge, hashtag):
-    # TODO: Handle empty ID
+    # TODO: PYCURL TO REDISJSON
         try:
             id = edge['node']['id']
         except:
@@ -59,13 +59,14 @@ def post_dict(edge, hashtag):
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
 
 def save_post_to_redis(page, hashtag):
-    pipe = r.pipeline()
+    pipe = rdb.pipeline()
     for edge in page['edges']:
         post = post_dict(edge, hashtag)
-        r.xadd("post:", post, maxlen=5000)
+        rdb.xadd("post:", post, maxlen=5000)
     pipe.execute()
 
 def default_user_agent() -> str:
+    print(f'FUNC: default_user_agent')
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
            '(KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36'
 
@@ -79,7 +80,7 @@ class InstaloaderTommy(Instaloader):
         super().__init__('Instaloader')
         self.context = InstaloaderContextTommy()
         self.download_comments=True
-        print("InstaloaderTommy Inint")
+        print("CLASS INIT: InstaloaderTommy Inint")
 
     def update_comments(self, filename: str, post: Post) -> None:
         print("NEW update_comments")
@@ -153,27 +154,42 @@ class InstaloaderTommy(Instaloader):
 class InstaloaderContextTommy(InstaloaderContext):
     default_user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
-    proxies = []
+    PROXIES_LIST = []
+
     @staticmethod
     def fillproxies():
+        # not being called
         print('FILLPROXIES()')
-        InstaloaderContextTommy.proxies = r.zrange('proxies:',0, -1)
-
-    def __init__(self, sleep: bool = True, quiet: bool = False, user_agent: Optional[str] = None,
-                 max_connection_attempts: int = 3):
-        print("CONTEXT INIT")
-        self.proxy = r.zrange('proxies:',1, 1)[0]
-        proxies = {"https" : self.proxy}
-        self.proxies = proxies
-
-        # if not InstaloaderContextTommy.proxies:
-        #     InstaloaderContextTommy.fillproxies()
+        for i in range(20):
+            print(f'Fillproxies() attempt {i}')
+            try:
+                InstaloaderContextTommy.PROXIES_LIST = rdb.zrange('proxies:',0, -1)
+                print(InstaloaderContextTommy.PROXIES_LIST[0])
+                return True
+            except:
+                print(f'Proxies error: failed to fetch from redis')
+                print(f'retrying in 3 seconds...')
+                time.sleep(3)
+                continue
+        raise Exception('Error: could not retrieve proxies list from rdb')
         
-        self.user_agent = user_agent if user_agent is not None else default_user_agent()
-        # if not InstaloaderContextTommy._session:
-        InstaloaderContextTommy._session = self.get_anonymous_session()
 
-        # self._session = self.get_anonymous_session()
+    def __init__(
+            self, sleep: bool = True,
+            quiet: bool = False,
+            user_agent: Optional[str] = None,
+            max_connection_attempts: int = 3):
+        print("CONTEXT INIT")
+
+        if not InstaloaderContextTommy.PROXIES_LIST:
+            InstaloaderContextTommy.fillproxies()
+        
+        self.proxies = {'https' : self.PROXIES_LIST[0]}
+        print(self.proxies)
+
+        self.user_agent = user_agent if user_agent is not None else default_user_agent()
+        self._session = self.get_anonymous_session()
+        print(f'_session: {self._session}')
         self.username = None
         self.sleep = sleep
         self.quiet = quiet
@@ -181,25 +197,27 @@ class InstaloaderContextTommy(InstaloaderContext):
         self._graphql_page_length = 50
         self._root_rhx_gis = None
         self.two_factor_auth_pending = None
-
         self.error_log = []                      # type: List[str]
-
         # For the adaption of sleep intervals (rate control)
         self._graphql_query_timestamps = dict()  # type: Dict[str, List[float]]
         self._graphql_earliest_next_request_time = 0.0
-
         # Can be set to True for testing, disables supression of InstaloaderContext._error_catcher
         self.raise_all_errors = False
-
         # Cache profile from id (mapping from id to Profile)
         self.profile_id_cache = dict()   
 
-    def change_proxy(self, dead_proxy):
+
+    def change_proxy(self):
         '''Delete proxy and get new proxy'''
-        r.zrem('proxies:', dead_proxy)
-        self.proxy = r.zrange('proxies:',1, 1)[0]        
-        proxies = {"https" : self.proxy}
+        if not self.PROXIES_LIST:
+            print('change_proxy: calling fillproxies()')
+            InstaloaderContextTommy.fillproxies()
+        print(f'change_proxy')
+        print(f'PROXIES_LIST SIZE: {len(self.PROXIES_LIST)}')
+        proxy = self.PROXIES_LIST.pop(0)
+        proxies = {"https" : proxy}
         return proxies
+
 
     def get_json(self, path: str, params: Dict[str, Any], host: str = 'www.instagram.com',
                  session: Optional[requests.Session] = None, _attempt=1) -> Dict[str, Any]:
@@ -217,8 +235,9 @@ class InstaloaderContextTommy(InstaloaderContext):
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
         # is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
-        proxies = self.proxies
-        # print(f'get_json proxies: {proxies}')
+        proxies = self.proxies if self.proxies else self.change_proxy()
+
+        print(f'get_json proxies: {proxies}')
         for attempt_no in range(30):
             try:
                 resp = sess.get(f'https://{host}/{path}',
@@ -238,17 +257,17 @@ class InstaloaderContextTommy(InstaloaderContext):
                     # raise QueryReturnedNotFoundException("404 Not Found")
                 if resp.status_code == 429:
                     print("TEST error 429: too many requests")
-                    proxies = self.change_proxy(self.proxy)
+                    proxies = self.change_proxy()
                     continue
                 if resp.status_code != 200:
                     print(f'status code: {str(resp.status_code)} proxy:{proxies}')
-                    proxies = self.change_proxy(self.proxy)
-                    continue
+                    proxies = self.change_proxy()
+
                 is_html_query = not is_graphql_query and not "__a" in params and host == "www.instagram.com"
                 if is_html_query:
                     match = re.search(r'window\._sharedData = (.*);</script>', resp.text)
                     if match is None:
-                        proxies = self.change_proxy(self.proxy)
+                        proxies = self.change_proxy()
                         continue
                     return json.loads(match.group(1))
                 else:
@@ -256,11 +275,11 @@ class InstaloaderContextTommy(InstaloaderContext):
                 if 'status' in resp_json and resp_json['status'] != "ok":
                     if 'message' in resp_json:
                         print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        proxies = self.change_proxy(self.proxy)
+                        proxies = self.change_proxy()
                         continue
                     else:
                         print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        proxies = self.change_proxy(self.proxy)
+                        proxies = self.change_proxy()
                         continue
                 return resp_json
             
@@ -271,7 +290,7 @@ class InstaloaderContextTommy(InstaloaderContext):
             except:
                 print(f'error: attemp: {attempt_no}')
                 print(proxies)
-                proxies = self.change_proxy(self.proxy)
+                proxies = self.change_proxy()
                 continue
 
         # except QueryReturnedNotFoundException as err:
