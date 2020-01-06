@@ -55,7 +55,7 @@ def cache(tag):
     # CACHE COMPLETE. DEL FROM QUEUE
     r.srem('set:cache:queue', tag)
     
-# TODO WHATS UP
+
 while True:
     print('Cache Machine Ready! Waiting for tags from redis...')
     # TODO: DONE: TOPK TOP100 REQUESTS

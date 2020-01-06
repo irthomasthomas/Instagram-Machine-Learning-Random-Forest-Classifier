@@ -10,16 +10,18 @@ import random
 from redis import Redis
 import time
 import re
+from redisbloom.client import Client
 
+rb = Client()
 rdb = Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 
 def post_dict(edge, hashtag):
     # TODO: PYCURL TO REDISJSON
         try:
-            id = edge['node']['id']
+            postId = edge['node']['id']
         except:
-            id = ""
+            postId = ""
         try:
             likes = edge['node']['edge_liked_by']['count']
         except:
@@ -55,15 +57,17 @@ def post_dict(edge, hashtag):
         except:
             imgUrl = ""
 
-        return {"postId": id, "rootTag": hashtag, "imgUrl": imgUrl, "likes": likes, "comments":comments,"caption":caption, 
+        return {"postId": postId, "rootTag": hashtag, "imgUrl": imgUrl, "likes": likes, "comments":comments,"caption":caption, 
         "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
 
-def save_post_to_redis(page, hashtag):
+# TODO: DUMP PAGE TO RedisJSON
+def save_page_to_redis(page, hashtag):
     pipe = rdb.pipeline()
     for edge in page['edges']:
         post = post_dict(edge, hashtag)
-        rdb.xadd("post:", post, maxlen=5000)
+        pipe.xadd("post:", post, maxlen=2000)
     pipe.execute()
+
 
 def default_user_agent() -> str:
     print(f'FUNC: default_user_agent')
@@ -128,12 +132,16 @@ class InstaloaderTommy(Instaloader):
                 file.write(json.dumps(list(filter(lambda t: int(t['id']) not in answer_ids, comments)), indent=4))
             self.context.log('comments', end=' ', flush=True)
 
-    def get_hashtag_posts(self, hashtag: str, resume=False, end_cursor=False) -> Iterator[Post]:
+    def get_hashtag_posts(
+        self, hashtag: str, archive_run=False,
+        dump_page=False, duplicate_check=True,
+        resume=False, end_cursor=False) -> Iterator[Post]:
         """Get Posts associated with a #hashtag."""
         print("GET_HASHTAG_POSTS()")
         has_next_page = True
+        print()
         if resume:
-            end_cursor = False
+            end_cursor = rdb.get(f'page:cursor:{hashtag}')
             # end_cursor = get_end_cursor(hashtag)
         while has_next_page:
             if end_cursor:
@@ -143,11 +151,72 @@ class InstaloaderTommy(Instaloader):
             hashtag_data = self.context.get_json(
                 f'explore/tags/{hashtag}/',
                 params)['graphql']['hashtag']['edge_hashtag_to_media']       
-            count = hashtag_data['count']     
+            
+            count = hashtag_data['count'] # TODO: USE PAGE COUNT TO DECIDE SCRAPE DEPTH
+            print(f'count: {count}')
             end_cursor = hashtag_data['page_info']['end_cursor']
-            # TODO: end_cursor key epiry
-            save_post_to_redis(hashtag_data, hashtag)
-            yield len(hashtag_data['edges'])
+            if end_cursor:
+                rdb.set(f'page:cursor:{hashtag}', end_cursor)
+            else:
+                rdb.sadd('scrape:complete', hashtag)
+            postId = hashtag_data['edges'][0]['node']['id']
+            print(f'PostID: {postId}  EndCursor: {end_cursor}')
+            # if the postId exists for rootTag we stop
+            # if it exists from other tag skip prediction
+
+            # possible states...
+            # New tag, 
+                # no rootTag
+                # rootTag = tag
+                # 1st request
+                # 1st page
+                # store pageid for resume
+                    # req level 2 related tags
+                    # stop after some number of scrapes
+                    # 
+                    # stop scraping based on feedback from redisAI
+                    # use relevance score
+                    # store frequency score
+                    # found / searched 600 / 20 = 30
+                    # 6000 / 7 = 857 
+                    # 60 / 
+                    # if freq_score > 600 stop scraping, mark irrelivant
+            # level 2 req related tags
+                # rootTag = rootTag
+                # level2/related req = True
+                # only scrape 1 page and return
+                # if 1st page pred1's > 1 carry on, stop on 0
+                # do not add related tags to scrape queue
+            # Archive scrape
+                # get pageid
+                # scrape resume
+                # scrape 10 pages
+                # store pageid
+                # exit
+            # TODO: Are tags being looped twice in scraper and in gears?
+
+            tag_sketch_key = f'sketch:all:{hashtag}'
+            if rdb.exists(tag_sketch_key):
+                print(f'exists: {tag_sketch_key}')
+                post_exists = rb.cmsQuery(tag_sketch_key, postId)    # returns [10, 15]
+            else:
+                print(f'sketch NOT Exists {tag_sketch_key}')
+                res = rb.cmsInitByDim(tag_sketch_key, 2000, 10)
+                print(f'cms res: {res}')
+                # rb.cmsInitByDim('dim', 1000, 5) 2000, 10 = 0.01% error rate
+            # TODO: RootTag parameter in scrape req
+            # TODO: TODO: NAMESPACE in todo?
+            
+            print(f'post_exists: {post_exists}')
+            # TODO: HANDLE DEEP SCRAPING
+            if post_exists and not archive_run:
+                yield 6000
+            save_page_to_redis(hashtag_data, hashtag)
+            if dump_page:
+                yield len(hashtag_data['edges'])
+            else:
+                yield len(hashtag_data['edges'])
+
             has_next_page = hashtag_data['page_info']['has_next_page']
 
 
@@ -155,25 +224,7 @@ class InstaloaderContextTommy(InstaloaderContext):
     default_user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
     PROXIES_LIST = []
-
-    @staticmethod
-    def fillproxies():
-        # not being called
-        print('FILLPROXIES()')
-        for i in range(20):
-            print(f'Fillproxies() attempt {i}')
-            try:
-                InstaloaderContextTommy.PROXIES_LIST = rdb.zrange('proxies:',0, -1)
-                print(InstaloaderContextTommy.PROXIES_LIST[0])
-                return True
-            except:
-                print(f'Proxies error: failed to fetch from redis')
-                print(f'retrying in 3 seconds...')
-                time.sleep(3)
-                continue
-        raise Exception('Error: could not retrieve proxies list from rdb')
-        
-
+    
     def __init__(
             self, sleep: bool = True,
             quiet: bool = False,
@@ -181,15 +232,13 @@ class InstaloaderContextTommy(InstaloaderContext):
             max_connection_attempts: int = 3):
         print("CONTEXT INIT")
 
-        if not InstaloaderContextTommy.PROXIES_LIST:
-            InstaloaderContextTommy.fillproxies()
-        
-        self.proxies = {'https' : self.PROXIES_LIST[0]}
-        print(self.proxies)
+        proxy = self.change_proxy()
+        self.proxies = {'https' : proxy}
+        # print(self.proxies)
 
         self.user_agent = user_agent if user_agent is not None else default_user_agent()
         self._session = self.get_anonymous_session()
-        print(f'_session: {self._session}')
+        # print(f'_session: {self._session}')
         self.username = None
         self.sleep = sleep
         self.quiet = quiet
@@ -209,14 +258,9 @@ class InstaloaderContextTommy(InstaloaderContext):
 
     def change_proxy(self):
         '''Delete proxy and get new proxy'''
-        if not self.PROXIES_LIST:
-            print('change_proxy: calling fillproxies()')
-            InstaloaderContextTommy.fillproxies()
-        print(f'change_proxy')
-        print(f'PROXIES_LIST SIZE: {len(self.PROXIES_LIST)}')
-        proxy = self.PROXIES_LIST.pop(0)
-        proxies = {"https" : proxy}
-        return proxies
+        proxy = rdb.zpopmin('proxies:')[0]        
+        print(f'pop proxy: {proxy[0]}:{proxy[1]}')
+        return proxy[0]
 
 
     def get_json(self, path: str, params: Dict[str, Any], host: str = 'www.instagram.com',
@@ -235,13 +279,26 @@ class InstaloaderContextTommy(InstaloaderContext):
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
         # is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
-        proxies = self.proxies if self.proxies else self.change_proxy()
+        # print('sess')
+        # proxy = self.proxy if self.proxy else 
+        proxy = self.change_proxy()
 
-        print(f'get_json proxies: {proxies}')
+        # print(f'proxy: {proxy}')
+        proxies = {"https" : proxy}
+        # print(f'proxies: {proxies}')
+        # print(sess)
+        print(f'get_json ')
         for attempt_no in range(30):
+            print(f'attempt: {attempt_no}')
             try:
-                resp = sess.get(f'https://{host}/{path}',
-                    proxies=proxies, params=params, allow_redirects=False, timeout=3)
+                conn_start = time.perf_counter()
+                resp = sess.get(
+                    f'https://{host}/{path}',
+                    proxies=proxies,
+                    params=params,
+                    allow_redirects=False,
+                    timeout=3)
+
                 while resp.is_redirect:
                     print("redirect")
                     redirect_url = resp.headers['location']
@@ -250,24 +307,37 @@ class InstaloaderContextTommy(InstaloaderContext):
                                         proxies=proxies, params=params, allow_redirects=False, timeout=3)
                     else:
                         break
+                conn_end = time.perf_counter()
+                conn_time = conn_end - conn_start
+                print(f'conn_time: {conn_time}')
+                print(f'ADD {proxy}:{conn_time}')
+                # TODO: SET PROXY SCORE REDIS
                 if resp.status_code == 400:
                     print("error 400")
                 if resp.status_code == 404:
                     print("error 404")
                     # raise QueryReturnedNotFoundException("404 Not Found")
                 if resp.status_code == 429:
-                    print("TEST error 429: too many requests")
-                    proxies = self.change_proxy()
+                    print("TEST error 429: too many requests")                    
+                    proxy = self.change_proxy()
+                    proxies = {"https" : proxy}
                     continue
                 if resp.status_code != 200:
                     print(f'status code: {str(resp.status_code)} proxy:{proxies}')
-                    proxies = self.change_proxy()
+                    proxy = self.change_proxy()
+                    proxies = {"https" : proxy}
+                else:                
+                    rdb.zadd('proxies:', {proxy: conn_time})
+
 
                 is_html_query = not is_graphql_query and not "__a" in params and host == "www.instagram.com"
                 if is_html_query:
+                    print('is_html')
                     match = re.search(r'window\._sharedData = (.*);</script>', resp.text)
                     if match is None:
-                        proxies = self.change_proxy()
+                        print('match is None')
+                        proxy = self.change_proxy()
+                        proxies = {"https" : proxy}
                         continue
                     return json.loads(match.group(1))
                 else:
@@ -275,11 +345,13 @@ class InstaloaderContextTommy(InstaloaderContext):
                 if 'status' in resp_json and resp_json['status'] != "ok":
                     if 'message' in resp_json:
                         print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        proxies = self.change_proxy()
+                        proxy = self.change_proxy()
+                        proxies = {"https" : proxy}
                         continue
                     else:
                         print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        proxies = self.change_proxy()
+                        proxy = self.change_proxy()
+                        proxies = {"https" : proxy}
                         continue
                 return resp_json
             
@@ -287,10 +359,12 @@ class InstaloaderContextTommy(InstaloaderContext):
                 error_string = f'JSON Query to {path}: {err}'
                 self.error("[skipped by user]", repeat_at_end=False)
                 raise ConnectionException(error_string) from err
-            except:
+            except Exception as e:
+                print(f'EXCEPTION: {e}')
+
                 print(f'error: attemp: {attempt_no}')
-                print(proxies)
-                proxies = self.change_proxy()
+                proxy = self.change_proxy()
+                proxies = {"https" : proxy}
                 continue
 
         # except QueryReturnedNotFoundException as err:
