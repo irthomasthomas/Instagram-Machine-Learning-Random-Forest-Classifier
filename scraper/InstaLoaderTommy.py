@@ -158,65 +158,69 @@ class InstaloaderTommy(Instaloader):
             if end_cursor:
                 rdb.set(f'page:cursor:{hashtag}', end_cursor)
             else:
-                rdb.sadd('scrape:complete', hashtag)
+                rdb.add(f'scrape:complete:{hashtag}')
             postId = hashtag_data['edges'][0]['node']['id']
             print(f'PostID: {postId}  EndCursor: {end_cursor}')
             # if the postId exists for rootTag we stop
             # if it exists from other tag skip prediction
-
             # possible states...
-            # New tag, 
-                # no rootTag
-                # rootTag = tag
-                # 1st request
-                # 1st page
-                # store pageid for resume
-                    # req level 2 related tags
-                    # stop after some number of scrapes
-                    # 
-                    # stop scraping based on feedback from redisAI
-                    # use relevance score
-                    # store frequency score
-                    # found / searched 600 / 20 = 30
-                    # 6000 / 7 = 857 
-                    # 60 / 
-                    # if freq_score > 600 stop scraping, mark irrelivant
-            # level 2 req related tags
-                # rootTag = rootTag
-                # level2/related req = True
-                # only scrape 1 page and return
-                # if 1st page pred1's > 1 carry on, stop on 0
-                # do not add related tags to scrape queue
-            # Archive scrape
-                # get pageid
-                # scrape resume
-                # scrape 10 pages
-                # store pageid
-                # exit
+                # New tag, 
+                    # no rootTag
+                    # rootTag = tag
+                    # 1st request
+                    # 1st page
+                    # store pageid for resume
+                        # req level 2 related tags
+                        # stop after some number of scrapes
+                        # 
+                        # stop scraping based on feedback from redisAI
+                        # use relevance score
+                        # store frequency score
+                        # found / searched 600 / 20 = 30
+                        # 6000 / 7 = 857 
+                        # 60 / 
+                        # if freq_score > 600 stop scraping, mark irrelivant
+                # level 2 req related tags
+                    # rootTag = rootTag
+                    # level2/related req = True
+                    # only scrape 1 page and return
+                    # if 1st page pred1's > 1 carry on, stop on 0
+                    # do not add related tags to scrape queue
+                # Archive scrape
+                    # get pageid
+                    # scrape resume
+                    # scrape 10 pages
+                    # store pageid
+                    # exit
             # TODO: Are tags being looped twice in scraper and in gears?
-
+            # TODO: Get page 1, then get 1 page for each tag found
+            # CHECK IF A CMS EXISTS FOR THIS HASHTAG
+            # IF NOT CREATE ONE
             tag_sketch_key = f'sketch:all:{hashtag}'
             if rdb.exists(tag_sketch_key):
                 print(f'exists: {tag_sketch_key}')
-                post_exists = rb.cmsQuery(tag_sketch_key, postId)    # returns [10, 15]
+                post_exists = rb.cmsQuery(tag_sketch_key, postId)[0]
+                print(f'post_exists: {post_exists}')
             else:
                 print(f'sketch NOT Exists {tag_sketch_key}')
-                res = rb.cmsInitByDim(tag_sketch_key, 2000, 10)
+                res = rb.cmsInitByDim(tag_sketch_key, 2000, 10) # 0.01% Error rate
                 print(f'cms res: {res}')
-                # rb.cmsInitByDim('dim', 1000, 5) 2000, 10 = 0.01% error rate
-            # TODO: RootTag parameter in scrape req
-            # TODO: TODO: NAMESPACE in todo?
+                post_exists = False
             
-            print(f'post_exists: {post_exists}')
             # TODO: HANDLE DEEP SCRAPING
             if post_exists and not archive_run:
+                print('ONE')
                 yield 6000
+            print('ONE:A')
             save_page_to_redis(hashtag_data, hashtag)
+            print('TWO')
             if dump_page:
+                print('three: dump_page true')
                 yield len(hashtag_data['edges'])
             else:
+                print('three: else yield')
                 yield len(hashtag_data['edges'])
-
+            print('four')
             has_next_page = hashtag_data['page_info']['has_next_page']
 
 

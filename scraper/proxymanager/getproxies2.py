@@ -7,11 +7,11 @@ from proxybroker import Broker, ProxyPool
 from proxybroker.errors import NoProxyError
 import asyncio
 import time
-import redis
+from redis import Redis
 
 async def show(proxies):
     session = Session()
-    r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+    rdb = Redis(host='localhost', port=6379, db=0, decode_responses=True)
     test_url = 'https://www.instagram.com/'
     while True:
         proxy = await proxies.get()
@@ -29,19 +29,15 @@ async def show(proxies):
             timing = end - start
             print(time.localtime)
             print(f'{proxy} time: {timing}')
-            result = r.zadd('proxies:', {ip: timing})
+            result = rdb.zadd('proxies:', {ip: timing})
             print(result)
             print(time.strftime('%X %x %Z'))
 
         except:
             print(time.strftime('%X %x %Z'))
             print(f'Rejected: {proxy}')
-            # result = r.zrem('proxies:', ip)
-            # print(result)
             
             continue
-        # print(f'Found proxy: {proxy}')
-        # zpopmin / zrem
 
 
 def main():

@@ -69,7 +69,7 @@ while True:
         continue
     # 
     print(f'Received cache request for {tag}')
-    rb.topkAdd('top10requests', tag)
+    # rb.topkAdd('topk:10requests', tag)
     print(time.strftime('%X %x %Z'))
     
     

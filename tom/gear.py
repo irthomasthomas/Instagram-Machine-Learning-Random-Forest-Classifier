@@ -11,7 +11,7 @@ import time
 vectorizer = pickle.load(open("/home/tommy/development/vectorizer.pickle", "rb"))
 conn = Redis(host="localhost", port=6379, db=0)
 stopwords = get_stop_words('english')
-
+# TODO: PERF METRICS / INSTRUMENTATION
 
 def pre_proc_text(x):
 
@@ -20,11 +20,11 @@ def pre_proc_text(x):
         # tags = []
 
         def repl(m):
-            tag = m.group(0)[1:]
-            # tags.append(t)
-            # TODO: INSERT TAGS INTO REDIS LIST HERE
+            # TODO: Done: INSERT TAGS INTO REDIS LIST HERE
             # DELETE THE LIST LATER IF NOT REQUIRED
             # TODO: GEARS PIPELINE
+            # TODO: CHANGE SET TO PDD? 
+            tag = m.group(0)[1:]
             execute('SADD', f'post:tags:{postId}', tag)
             execute('SADD', f'tag:posts:{tag}', postId)
             return ""
@@ -56,37 +56,30 @@ def pre_proc_text(x):
         text = [word for word in text if word not in stopword]
         return text
     
-    # TODO: BREAK ON DUPE
     postId = x['postId']
     rootTag = x['rootTag']
     caption = x['caption']
-
+    # TODO: BREAK ON DUPE
     execute('cmsIncrBy', 'sketch:allposts', postId, '1')
-    execute('cmsIncrBy', f'sketch:all:{rootTag}', postId, '1')
-
-
+    exists = execute('exists', f'sketch:all:{rootTag}')
+    if exists:
+        execute('cmsIncrBy', f'sketch:all:{rootTag}', postId, '1')
+    # rootTag = bubblecap
+    # tag = 
+    print('ONE')
     caption = extract_hashtags(caption, postId)
-
     
     caption_text = extract_mentions(caption)
     caption = caption_text
 
-
     caption = remove_punct(caption)
     caption = tokenize(caption)
-
 
     caption = remove_stopwords(caption, stopwords)
     caption = ' '.join(caption)
     caption = caption.rstrip()
-
-    # print(f'PRE PROCESSOR TIME: {end - start}')
-    # print(f't1: {end2 - start} t2: {end3 - end2} t3: {end4 - end3}')
-
-    # print(f'cap len: {len(caption)}') #not len slow 
-    # print(f'tags len: {len(tags)}')
-    # print(caption)
-    # TODO: DON'T RETURN TAGS. THEY'RE NOW IN REDIS LIST
+    print('TWO')
+    # TODO: DONE: DON'T RETURN TAGS. THEY'RE NOW IN REDIS LIST
     
     return x, caption, caption_text
 
@@ -95,15 +88,21 @@ def runModel(x):
     caption = x[1]
     sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
-    execute(
-        'AI.TENSORSET', 'auction:tensor', 'FLOAT',
+    print(caption)
+    res = execute('AI.TENSORSET', 'auction:tensor', 'FLOAT',
         '1', '80', 'BLOB', ba.tobytes())
-    execute(
-        'AI.MODELRUN', 'auction:model',
+    print(f'res1: {res}')
+
+    res2 = execute('AI.MODELRUN', 'auction:model',
         'INPUTS', 'auction:tensor',
         'OUTPUTS', 'out_label', 'out_probs')
-    out = execute(
-        'AI.TENSORGET', 'out_label', 'VALUES')
+    print(f'res2: {res2}')
+
+    out = execute('AI.TENSORGET', 'out_label', 'VALUES')
+
+    print(f'out: {out}')
+    print(f'out2 {out[2]}')
+    print(f'pred {out[2][0]}')
     # end = time.perf_counter()
     # print(f'NEW: {end - start}')
     # print(out)
@@ -114,6 +113,8 @@ def storeResults(x):
     # start = time.perf_counter() # time 0.0001
     # print(len(x[2]))
     # TODO: PIPELINE
+    # TODO: rootTag should be the hashtag that initialised the search.
+    # subtags should be saved to parent related and not stored unless unique
     rootTag = x[0]['rootTag']
     postId = x[0]['postId']
     shortcode = x[0]['shortcode']
@@ -135,31 +136,29 @@ def storeResults(x):
         'ig_timestamp', x[0]['timestamp'],
         'retrieved_date', x[0]['scrape_date'])
     
-    # TODO: IF STREAM LEN > 10 SET CACHE FLAG
     # end1 = time.perf_counter()
     # print(f'Timer1: {end1 - start}')
 
     # TODO: REFACTOR AND MOVE THIS OUT OF THE GEAR
     # AND IN TO THE CACHE HANDLER
 
+    # TODO: DONE: CACHE MAKER DECIDES IF ANYTHING TO CACHE
     # TODO: GEAR SHOULD NOTIFY CACHE MAKER
-    # TODO: CACHE MAKER DECIDES IF ANYTHING TO CACHE
-    execute('topk.add', 'top10tags', rootTag)
-    execute('topk.add', 'top100tags', rootTag)
+    # TODO: ADD STREAMKEY TO LIST TO TRIGGER FURTHER PROCESSING
+    # TODO: USE A PDS TO TIME/BENCHMARK...
+    execute('topk.add', 'topk:10tags', rootTag)
+    execute('topk.add', 'topk:100tags', rootTag)
+    # TODO: replace zset with HLL/CMS ordered 
     execute('zincrby', 'topzhashtags:', rootTag, 1)
-    execute('cmsIncrBy', f'sketch:out:{rootTag}', postId, '1')    
-    # for tag in x[2]:
-    #     execute('SADD', f'post:tags:{postId}', tag)
-    #     execute('SADD', f'tag:posts:{tag}', postId)
-    # Add The stream key to a stream
-    # block read 1st stream
-    # get stream key
-    # end2 = time.perf_counter()
-    # print(f'timer2: {end2 - end1}')
-
-def printx(x):
-    print(f'X: {x}')
-
+    # TODO: Sketch must be created first
+    if not execute('exists', f'sketch:out:{rootTag}'):
+        print(f'creating new sketch: {rootTag}')
+        execute('cmsInitByDim',
+            f'sketch:out:{rootTag}', 2000, 10)
+    execute('cmsIncrBy', f'sketch:out:{rootTag}', postId, 1)
+    execute('cmsIncrBy', 'sketch:predicted', postId, 1)
+    
+# TODO: AVOID STORING SAME POST TWICE
 
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
