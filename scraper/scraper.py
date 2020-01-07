@@ -30,12 +30,18 @@ def scrape(tag, num_to_scrape):
                     duplicate_check=True):
                 # TODO:Should I control scraping here or in class?
                 total += count
-                # print(f'scraped: {total}')
+                # Trigger cache generator
+                print(f'scraped: {total}')
                 added = r.sadd('set:cache:queue', tag)
                 if added:
                     r.lpush('cache:queue:ready', tag)
-
+                
                 if total > num_to_scrape:
+                    # trigger archive background scraper
+                    scrape_more = r.sadd('set:tags:archive:queue', tag)
+                    print(f'scrape_more: {scrape_more}')
+                    if scrape_more:
+                        r.lpush('archive:tagsin', tag)
                     total = 0
                     # TODO: DONE: ONLY CACHE READY WHEN STREAM OUT > 10
                     # TODO: DONE: ADD TO SET IF SUCCESS LPUSH
