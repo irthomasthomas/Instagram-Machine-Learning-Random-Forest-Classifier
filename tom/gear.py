@@ -66,7 +66,6 @@ def pre_proc_text(x):
         execute('cmsIncrBy', f'sketch:all:{rootTag}', postId, '1')
     # rootTag = bubblecap
     # tag = 
-    print('ONE')
     caption = extract_hashtags(caption, postId)
     
     caption_text = extract_mentions(caption)
@@ -78,7 +77,6 @@ def pre_proc_text(x):
     caption = remove_stopwords(caption, stopwords)
     caption = ' '.join(caption)
     caption = caption.rstrip()
-    print('TWO')
     # TODO: DONE: DON'T RETURN TAGS. THEY'RE NOW IN REDIS LIST
     
     return x, caption, caption_text
@@ -88,24 +86,18 @@ def runModel(x):
     caption = x[1]
     sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
-    print(caption)
-    res = execute('AI.TENSORSET', 'auction:tensor', 'FLOAT',
+    res = execute(
+        'AI.TENSORSET', 'auction:tensor', 'FLOAT',
         '1', '80', 'BLOB', ba.tobytes())
-    print(f'res1: {res}')
 
-    res2 = execute('AI.MODELRUN', 'auction:model',
+    res2 = execute(
+        'AI.MODELRUN', 'auction:model',
         'INPUTS', 'auction:tensor',
         'OUTPUTS', 'out_label', 'out_probs')
-    print(f'res2: {res2}')
 
-    out = execute('AI.TENSORGET', 'out_label', 'VALUES')
+    out = execute(
+        'AI.TENSORGET', 'out_label', 'VALUES')
 
-    print(f'out: {out}')
-    print(f'out2 {out[2]}')
-    print(f'pred {out[2][0]}')
-    # end = time.perf_counter()
-    # print(f'NEW: {end - start}')
-    # print(out)
     return out[2][0]
 
 def storeResults(x):
@@ -115,8 +107,12 @@ def storeResults(x):
     # TODO: PIPELINE
     # TODO: rootTag should be the hashtag that initialised the search.
     # subtags should be saved to parent related and not stored unless unique
-    rootTag = x[0]['rootTag']
+    
     postId = x[0]['postId']
+    print(postId)
+    rootTag = x[0]['rootTag']
+    print(rootTag)
+
     shortcode = x[0]['shortcode']
     streamKey = 'tags:out:' + rootTag
     link = f'https://www.instagram.com/p/{shortcode}'

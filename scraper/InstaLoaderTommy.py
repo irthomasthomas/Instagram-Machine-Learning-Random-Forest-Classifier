@@ -1,73 +1,188 @@
-from instaloader import Instaloader
-from instaloader import InstaloaderContext, Post
-from instaloader.structures import PostComment, PostCommentAnswer, Profile
-from instaloader.exceptions import *
-
-from typing import Any, Callable, Dict, Tuple, Iterator, List, Optional, Union
-import requests
 import json
+import pickle
 import random
-from redis import Redis
-import time
 import re
-from redisbloom.client import Client
+import time
+from multiprocessing import Process
+from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
-rb = Client()
+import requests
+from redis import Redis
+
+from instaloader import Instaloader, InstaloaderContext, Post
+from instaloader.exceptions import *
+from instaloader.structures import PostComment, PostCommentAnswer, Profile
+from redisbloom.client import Client
+from rejson import Client as rjclient
+from rejson import Path
+
+rj = rjclient(decode_responses=True)
+rb = Client(decode_responses=True)
 rdb = Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 
-def post_dict(edge, hashtag):
+def post_dict(edge, hashtag, is_first_page, related=False):
     # TODO: PYCURL TO REDISJSON
-        try:
-            postId = edge['node']['id']
-        except:
-            postId = ""
-        try:
-            likes = edge['node']['edge_liked_by']['count']
-        except:
-            print('empty')
-            likes = ""
-        try:
-            comments = edge['node']['edge_media_to_comment']['count']
-        except:
-            comments = ""
-        try:
-            caption = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
-        except:
-            caption = ""
-        try:
-            typename = edge['node']['__typename']
-        except:
-            typename = ""
-        try:
-            owner_id = edge['node']['owner']['id']
-        except:
-            owner_id = ""
-        try:
-            shortcode = edge['node']['shortcode']
-        except:
-            shortcode = ""
-        try:
-            timestamp = edge['node']['taken_at_timestamp']
-        except:
-            timestamp = ""
-        scrape_date = time.time()
-        try:
-            imgUrl = f'https://www.instagram.com/p/{shortcode}/media/?size=m'
-        except:
-            imgUrl = ""
+    # TODO: REFACTORING
+    # post['is_first_page'] = is_first_page
+        # test = post['is_first_page']
+        # print(f'test: is first page: {test}') # True
+    try:
+        postId = edge['node']['id']
+    except:
+        postId = ""
+    try:
+        likes = edge['node']['edge_liked_by']['count']
+    except:
+        print('empty')
+        likes = ""
+    try:
+        comments = edge['node']['edge_media_to_comment']['count']
+    except:
+        comments = ""
+    try:
+        caption = edge['node']['edge_media_to_caption']['edges'][0]['node']['text']
+    except:
+        caption = ""
+    try:
+        typename = edge['node']['__typename']
+    except:
+        typename = ""
+    try:
+        owner_id = edge['node']['owner']['id']
+    except:
+        owner_id = ""
+    try:
+        shortcode = edge['node']['shortcode']
+    except:
+        shortcode = ""
+    try:
+        timestamp = edge['node']['taken_at_timestamp']
+    except:
+        timestamp = ""
+    scrape_date = time.time()
+    try:
+        imgUrl = f'https://www.instagram.com/p/{shortcode}/media/?size=m'
+    except:
+        imgUrl = ""
+    if is_first_page:
+        is_first_page = 'True'
+    else:
+        is_first_page = 'False'
+    if related:
+        related_tag = related
+    else:
+        related_tag = 'False'
 
-        return {"postId": postId, "rootTag": hashtag, "imgUrl": imgUrl, "likes": likes, "comments":comments,"caption":caption, 
-        "typename":typename,"owner_id":owner_id,"shortcode":shortcode,"timestamp":timestamp,"scrape_date":scrape_date}
+    return {"postId": postId,
+        "rootTag": hashtag, "related_tag": related_tag,
+        "is_first_page": is_first_page, "imgUrl": imgUrl,
+        "likes": likes, "comments":comments,
+        "caption":caption, "typename":typename,
+        "owner_id":owner_id,"shortcode":shortcode,
+        "timestamp":timestamp,"scrape_date":scrape_date}
+
+def extract_hashtags(page, rootTag):
+    print('exctract hashtags')
+    regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
+    # tags = []
+    # print(page)
+
+    def repl(m):
+        tag = m.group(0)[1:]
+        print(tag)
+        # tags.append(tag)
+        key = f'root:tag:{tag}'
+        rdb.set(key, rootTag)
+        added = rdb.sadd('queue:burst', tag)
+        if added:
+            rdb.lpush('list:burst', tag)
+        # TODO: INSERT TAGS INTO REDIS LIST HERE
+        # DELETE THE LIST LATER IF NOT REQUIRED
+        # TODO: GEARS PIPELINE
+        return ""
+
+    for edge in page['edges']:
+        print(edge)
+        caption = regexp.sub(repl, edge.lower())
+
+    print('finished extract tags')
+    return
+
+def extract_hashtags2(caption):
+        regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
+        tags = []
+
+        def repl(m):
+            tag = m.group(0)[1:]
+            tags.append(tag)
+            # TODO: INSERT TAGS INTO REDIS LIST HERE
+            # DELETE THE LIST LATER IF NOT REQUIRED
+            # TODO: GEARS PIPELINE
+            return ""
+
+        caption = regexp.sub(repl, caption.lower())
+        return tags
 
 # TODO: DUMP PAGE TO RedisJSON
-def save_page_to_redis(page, hashtag):
+def save_page_to_redis(page, hashtag, is_first_page, dump_page=False):
+    # TODO: Use related stream for given tag
+    # TODO: Done: gear.py roottag
+    # print(f'save_to_redis:  tag: {hashtag} is_first: {is_first_page}')
+    print('saving to redis')
     pipe = rdb.pipeline()
+    i = 1
+
     for edge in page['edges']:
-        post = post_dict(edge, hashtag)
+        post = post_dict(edge, hashtag, is_first_page)
         pipe.xadd("post:", post, maxlen=2000)
+        if i > 5:
+            pipe.execute() 
+            i = 1
+        else:
+            i += 1 
     pipe.execute()
 
+    if dump_page and is_first_page:
+        key = f'json:page:{hashtag}'
+        print(f'saving page to {key}')
+        rj.jsonset(key, Path.rootPath(), page)
+        print('done saving.')
+        # extract_hashtags(page=page, rootTag=hashtag)
+    
+def save_archiver_to_redis(page, hashtag):
+    # TODO: Use related stream for given tag
+    # TODO: roottag
+    pipe = rdb.pipeline()
+    i = 1
+    for edge in page['edges']:
+        post = post_dict(
+            edge=edge, hashtag=hashtag,
+            is_first_page=False)
+        post['archiver'] = 'True'
+        pipe.xadd("post:", post, maxlen=2000)
+        if i > 5:
+            pipe.execute()
+            i = 1
+        else:
+            i += 1 
+    pipe.execute()
+
+def save_related_result(page, relatedTag, rootTag):
+    pipe = rdb.pipeline()
+    i = 1
+    for edge in page['edges']:
+        post = post_dict(
+            edge=edge, hashtag=rootTag,
+            is_first_page=False, related=relatedTag)
+
+        pipe.xadd("post:", post, maxlen=2000)
+        if i > 5:
+            pipe.execute()
+            i = 1
+        else:
+            i += 1 
+    pipe.execute()
 
 def default_user_agent() -> str:
     print(f'FUNC: default_user_agent')
@@ -80,9 +195,12 @@ def get_end_cursor(hashtag):
 
 
 class InstaloaderTommy(Instaloader):
-    def __init__(self):
+    def __init__(self, mode="normal"):
         super().__init__('Instaloader')
-        self.context = InstaloaderContextTommy()
+        if mode == 'burst':
+            self.context = InstaloaderContextTommy(max_connection_attempts=1)
+        else:
+            self.context = InstaloaderContextTommy(max_connection_attempts=10)
         self.download_comments=True
         print("CLASS INIT: InstaloaderTommy Inint")
 
@@ -133,34 +251,40 @@ class InstaloaderTommy(Instaloader):
             self.context.log('comments', end=' ', flush=True)
 
     def get_hashtag_posts(
-        self, hashtag: str, archive_run=False,
-        dump_page=False, duplicate_check=True,
-        resume=False, end_cursor=False) -> Iterator[Post]:
+            self, hashtag: str, archive_run=False,
+            related_burst=False, dump_page=False,
+            duplicate_check=True, resume=False,
+            end_cursor=False, is_root_tag=False) -> Iterator[Post]:
         """Get Posts associated with a #hashtag."""
-        print("GET_HASHTAG_POSTS()")
+        # print("GET_HASHTAG_POSTS()")
+        if related_burst:
+            retries = 1
+            timeout = 1
+        
         has_next_page = True
-        print()
+        is_first_page = False
         if resume:
             end_cursor = rdb.get(f'page:cursor:{hashtag}')
             # end_cursor = get_end_cursor(hashtag)
         while has_next_page:
             if end_cursor:
                 params = {'__a': 1, 'max_id': end_cursor}
+                is_first_page = False
             else:
                 params = {'__a': 1}
+                is_first_page = True
             hashtag_data = self.context.get_json(
                 f'explore/tags/{hashtag}/',
                 params)['graphql']['hashtag']['edge_hashtag_to_media']       
             
             count = hashtag_data['count'] # TODO: USE PAGE COUNT TO DECIDE SCRAPE DEPTH
-            print(f'count: {count}')
+            # print(f'count: {count}')
             end_cursor = hashtag_data['page_info']['end_cursor']
             if end_cursor:
                 rdb.set(f'page:cursor:{hashtag}', end_cursor)
             else:
-                rdb.add(f'scrape:complete:{hashtag}')
+                rdb.set(f'scrape:complete:{hashtag}', 'True')
             postId = hashtag_data['edges'][0]['node']['id']
-            print(f'PostID: {postId}  EndCursor: {end_cursor}')
             # if the postId exists for rootTag we stop
             # if it exists from other tag skip prediction
             # possible states...
@@ -196,6 +320,8 @@ class InstaloaderTommy(Instaloader):
             # TODO: Get page 1, then get 1 page for each tag found
             # CHECK IF A CMS EXISTS FOR THIS HASHTAG
             # IF NOT CREATE ONE
+            # TODO: Don't make sketch if burst run
+
             tag_sketch_key = f'sketch:all:{hashtag}'
             if rdb.exists(tag_sketch_key):
                 print(f'exists: {tag_sketch_key}')
@@ -206,24 +332,46 @@ class InstaloaderTommy(Instaloader):
                 res = rb.cmsInitByDim(tag_sketch_key, 2000, 10) # 0.01% Error rate
                 print(f'cms res: {res}')
                 post_exists = False
-            
-            # TODO: HANDLE DEEP SCRAPING
-            if post_exists and not archive_run:
-                print('ONE')
-                yield 6000
-            print('ONE:A')
-            save_page_to_redis(hashtag_data, hashtag)
-            print('TWO')
-            if dump_page:
-                print('three: dump_page true')
-                yield len(hashtag_data['edges'])
+
+            if related_burst:
+                print('RELATED_BURST')
+                save_related_result(
+                    hashtag_data, hashtag, is_root_tag)
+            elif archive_run:
+                print('ARCHIVE_RUN')
+                save_archiver_to_redis(
+                    hashtag_data, hashtag)
             else:
-                print('three: else yield')
+                print('INITIAL_SCRAPE')
+                save_page_to_redis(
+                    page=hashtag_data, hashtag=hashtag,
+                    is_first_page=is_first_page, dump_page=dump_page)
+            # TODO: DONE:ARCHIVER.py: HANDLE DEEP SCRAPING
+
+            
+            if post_exists and not archive_run:
+                print('POST EXISTS')
+                yield 6000            
+            else:
                 yield len(hashtag_data['edges'])
-            print('four')
+                
             has_next_page = hashtag_data['page_info']['has_next_page']
+            print(f'has_next_page: {has_next_page}')
+            # TODO: If page 1 and not in requests set, extract hashtags and submit to burst scrape 1 page
+            print(f'related_burst: {related_burst}')
+           
 
-
+            # if related_burst or archive_run:
+            #     return
+            # else:
+            #     exctract_tags(hashtag_data, hashtag)
+                # p_extract = Process(
+                #         target=exctract_tags,
+                #         args=(hashtag_data, hashtag))
+                # p_extract.start()
+            
+            
+# TODO: WHAT is smallest time unit in python?
 class InstaloaderContextTommy(InstaloaderContext):
     default_user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
@@ -283,94 +431,94 @@ class InstaloaderContextTommy(InstaloaderContext):
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
         # is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
-        # print('sess')
-        # proxy = self.proxy if self.proxy else 
         proxy = self.change_proxy()
-
-        # print(f'proxy: {proxy}')
         proxies = {"https" : proxy}
-        # print(f'proxies: {proxies}')
-        # print(sess)
         print(f'get_json ')
-        for attempt_no in range(30):
-            print(f'attempt: {attempt_no}')
-            try:
-                conn_start = time.perf_counter()
-                resp = sess.get(
-                    f'https://{host}/{path}',
-                    proxies=proxies,
-                    params=params,
-                    allow_redirects=False,
-                    timeout=3)
 
-                while resp.is_redirect:
-                    print("redirect")
-                    redirect_url = resp.headers['location']
-                    if redirect_url.startswith(f'https://{host}/'):
-                        resp = sess.get(redirect_url if redirect_url.endswith('/') else redirect_url + '/',
-                                        proxies=proxies, params=params, allow_redirects=False, timeout=3)
-                    else:
-                        break
-                conn_end = time.perf_counter()
-                conn_time = conn_end - conn_start
-                print(f'conn_time: {conn_time}')
-                print(f'ADD {proxy}:{conn_time}')
-                # TODO: SET PROXY SCORE REDIS
-                if resp.status_code == 400:
-                    print("error 400")
-                if resp.status_code == 404:
-                    print("error 404")
-                    # raise QueryReturnedNotFoundException("404 Not Found")
-                if resp.status_code == 429:
-                    print("TEST error 429: too many requests")                    
-                    proxy = self.change_proxy()
-                    proxies = {"https" : proxy}
-                    continue
-                if resp.status_code != 200:
-                    print(f'status code: {str(resp.status_code)} proxy:{proxies}')
-                    proxy = self.change_proxy()
-                    proxies = {"https" : proxy}
-                else:                
-                    rdb.zadd('proxies:', {proxy: conn_time})
+        # for attempt_no in range(30):
+        #     print(f'attempt: {attempt_no}')
+        try:
+            conn_start = time.perf_counter()
+            resp = sess.get(
+                f'https://{host}/{path}',
+                proxies=proxies,
+                params=params,
+                allow_redirects=False,
+                timeout=3)
 
-
-                is_html_query = not is_graphql_query and not "__a" in params and host == "www.instagram.com"
-                if is_html_query:
-                    print('is_html')
-                    match = re.search(r'window\._sharedData = (.*);</script>', resp.text)
-                    if match is None:
-                        print('match is None')
-                        proxy = self.change_proxy()
-                        proxies = {"https" : proxy}
-                        continue
-                    return json.loads(match.group(1))
+            while resp.is_redirect:
+                print("redirect")
+                redirect_url = resp.headers['location']
+                if redirect_url.startswith(f'https://{host}/'):
+                    resp = sess.get(redirect_url if redirect_url.endswith('/') else redirect_url + '/',
+                                    proxies=proxies, params=params, allow_redirects=False, timeout=3)
                 else:
-                    resp_json = resp.json()
-                if 'status' in resp_json and resp_json['status'] != "ok":
-                    if 'message' in resp_json:
-                        print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        proxy = self.change_proxy()
-                        proxies = {"https" : proxy}
-                        continue
-                    else:
-                        print(f'err: message: attempt_no {attempt_no} _attempt: {_attempt} PROXY: {proxies}')
-                        proxy = self.change_proxy()
-                        proxies = {"https" : proxy}
-                        continue
-                return resp_json
-            
-            except KeyboardInterrupt as err:
-                error_string = f'JSON Query to {path}: {err}'
-                self.error("[skipped by user]", repeat_at_end=False)
-                raise ConnectionException(error_string) from err
-            except Exception as e:
-                print(f'EXCEPTION: {e}')
-
-                print(f'error: attemp: {attempt_no}')
+                    break
+            conn_end = time.perf_counter()
+            conn_time = conn_end - conn_start
+            # print(f'conn_time: {conn_time}')
+            # print(f'ADD {proxy}:{conn_time}')
+            # TODO: SET PROXY SCORE REDIS
+                # if resp.status_code == 400:
+                #     print("error 400")
+                # if resp.status_code == 404:
+                #     print("error 404")
+                #     # raise QueryReturnedNotFoundException("404 Not Found")
+                # if resp.status_code == 429:
+                #     print("TEST error 429: too many requests")                    
+                #     proxy = self.change_proxy()
+                #     proxies = {"https" : proxy}
+                #     continue
+            if resp.status_code != 200:
+                print(f'status code: {str(resp.status_code)} proxy:{proxies}')
                 proxy = self.change_proxy()
                 proxies = {"https" : proxy}
-                continue
+            else:                
+                rdb.zadd('proxies:', {proxy: conn_time})
 
+
+            is_html_query = not is_graphql_query and not "__a" in params and host == "www.instagram.com"
+            if is_html_query:
+                print('is_html')
+                match = re.search(r'window\._sharedData = (.*);</script>', resp.text)
+                if match is None:
+                    print('match is None')
+                    proxy = self.change_proxy()
+                    proxies = {"https" : proxy}
+                    return self.get_json(
+                    path=path, params=params, host=host,
+                    session=sess, _attempt=_attempt + 1)
+                return json.loads(match.group(1))
+            else:
+                resp_json = resp.json()
+            # TODO: if 'status' in resp_json and resp_json['status'] != "ok":
+            if 'status' in resp_json and resp_json['status'] != "ok":
+                print(f'error: attempt_no {_attempt}')
+                print(f'_attempt: {_attempt} PROXY: {proxies}')
+                proxy = self.change_proxy()
+                proxies = {"https" : proxy}
+                # continue
+                return self.get_json(
+                    path=path, params=params, host=host,
+                    session=sess, _attempt=_attempt + 1)
+
+            return resp_json
+        
+        except KeyboardInterrupt as err:
+            error_string = f'JSON Query to {path}: {err}'
+            self.error("[skipped by user]", repeat_at_end=False)
+            raise ConnectionException(error_string) from err
+        except Exception as e:
+            print(f'EXCEPTION: {e}')
+            error_string = "JSON Query to {}: {}".format(path, e)
+            if _attempt == self.max_connection_attempts:
+                raise ConnectionException(error_string) from err
+            print(f'error: attemp: {_attempt}')
+            proxy = self.change_proxy()
+            proxies = {"https" : proxy}
+            return self.get_json(
+                    path=path, params=params, host=host,
+                    session=sess, _attempt=_attempt + 1)
         # except QueryReturnedNotFoundException as err:
         #     raise err
 
