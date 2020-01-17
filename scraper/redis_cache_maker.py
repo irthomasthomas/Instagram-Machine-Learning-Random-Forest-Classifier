@@ -34,7 +34,8 @@ def cache(tag):
             {
                 'id': post['postId'],
                 'imgUrl': post['imgUrl'],
-                'link': post['link']
+                'link': post['link'],
+                'related': post['related_tag']
             }
         )
     per_page = 14
@@ -61,12 +62,15 @@ while True:
     # TODO: DONE: TOPK TOP100 REQUESTS
     min_results_to_cache = 5
     tag = r.brpop('cache:queue:ready')[1]
-    if r.xlen(f'tags:out:{tag}') > min_results_to_cache:
-        p = Process(target=cache, args=(tag,))
-        p.start()
-    else:
-        r.lpush('cache:queue:ready', tag)
-        continue
+    print(f'cache request: {tag}')
+    p = Process(target=cache, args=(tag,))
+    p.start()
+    # if r.xlen(f'tags:out:{tag}') > min_results_to_cache:
+    #     p = Process(target=cache, args=(tag,))
+    #     p.start()
+    # else:
+    #     r.lpush('cache:queue:ready', tag)
+    #     continue
     # 
     print(f'Received cache request for {tag}')
     # rb.topkAdd('topk:10requests', tag)

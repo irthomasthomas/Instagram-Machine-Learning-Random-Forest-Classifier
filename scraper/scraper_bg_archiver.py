@@ -50,8 +50,10 @@ def archive_scrape(tag):
                 if added:
                     r.lpush('cache:queue:ready', tag)
                 if total > num_to_scrape:
+                    print('SLEEP')
+                    time.sleep(60)
                     total = 0
-                    not_exists = r.sadd('set:tags:archive:queue', tag)
+                    not_exists = r.sadd('tags:archive:queue', tag)
                     print(f'not_exist: {not_exists}')
                     if not_exists:
                         print('push to tagsin')
@@ -65,7 +67,7 @@ while True:
     
     tag = r.brpop('archive:tagsin')[1] # add rootTag
     print(f'start: {tag}')
-    r.srem('set:tags:archive:queue', tag)
+    r.srem('tags:archive:queue', tag)
     if r.exists(f'scrape:complete:{tag}'):
         print(f'archiving already complete:{tag}')
         continue
