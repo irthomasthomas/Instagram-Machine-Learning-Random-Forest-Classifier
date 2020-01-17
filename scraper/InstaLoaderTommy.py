@@ -82,52 +82,10 @@ def post_dict(edge, hashtag, is_first_page, related=False):
         "owner_id":owner_id,"shortcode":shortcode,
         "timestamp":timestamp,"scrape_date":scrape_date}
 
-def extract_hashtags(page, rootTag):
-    print('exctract hashtags')
-    regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-    # tags = []
-    # print(page)
-
-    def repl(m):
-        tag = m.group(0)[1:]
-        print(tag)
-        # tags.append(tag)
-        key = f'root:tag:{tag}'
-        rdb.set(key, rootTag)
-        added = rdb.sadd('queue:burst', tag)
-        if added:
-            rdb.lpush('list:burst', tag)
-        # TODO: INSERT TAGS INTO REDIS LIST HERE
-        # DELETE THE LIST LATER IF NOT REQUIRED
-        # TODO: GEARS PIPELINE
-        return ""
-
-    for edge in page['edges']:
-        print(edge)
-        caption = regexp.sub(repl, edge.lower())
-
-    print('finished extract tags')
-    return
-
-def extract_hashtags2(caption):
-        regexp = re.compile(r"(?:#)(\w(?:(?:\w|(?:\.(?!\.))){0,28}(?:\w))?)")
-        tags = []
-
-        def repl(m):
-            tag = m.group(0)[1:]
-            tags.append(tag)
-            # TODO: INSERT TAGS INTO REDIS LIST HERE
-            # DELETE THE LIST LATER IF NOT REQUIRED
-            # TODO: GEARS PIPELINE
-            return ""
-
-        caption = regexp.sub(repl, caption.lower())
-        return tags
-
 # TODO: DUMP PAGE TO RedisJSON
 def save_page_to_redis(page, hashtag, is_first_page, dump_page=False):
-    # TODO: Use related stream for given tag
-    # TODO: Done: gear.py roottag
+    # TODO[x] -Done: Use related stream for given tag
+    # TODO -Done: gear.py roottag
     # print(f'save_to_redis:  tag: {hashtag} is_first: {is_first_page}')
     print('saving to redis')
     pipe = rdb.pipeline()
@@ -151,8 +109,7 @@ def save_page_to_redis(page, hashtag, is_first_page, dump_page=False):
         # extract_hashtags(page=page, rootTag=hashtag)
     
 def save_archiver_to_redis(page, hashtag):
-    # TODO: Use related stream for given tag
-    # TODO: roottag
+    # TODO: Done: Use related stream for given tag
     pipe = rdb.pipeline()
     i = 1
     for edge in page['edges']:
@@ -190,7 +147,7 @@ def default_user_agent() -> str:
            '(KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36'
 
 def get_end_cursor(hashtag):
-    # TODO: cursors to redis
+    # TODO: Done: cursors to redis
     return True
 
 
@@ -317,10 +274,10 @@ class InstaloaderTommy(Instaloader):
                     # store pageid
                     # exit
             # TODO: Are tags being looped twice in scraper and in gears?
-            # TODO: Get page 1, then get 1 page for each tag found
+            # TODO: Done: Get page 1, then get 1 page for each tag found
             # CHECK IF A CMS EXISTS FOR THIS HASHTAG
             # IF NOT CREATE ONE
-            # TODO: Don't make sketch if burst run
+            # TODO: Done: Don't make sketch if burst run
 
             tag_sketch_key = f'sketch:all:{hashtag}'
             if rdb.exists(tag_sketch_key):
@@ -357,7 +314,7 @@ class InstaloaderTommy(Instaloader):
                 
             has_next_page = hashtag_data['page_info']['has_next_page']
             print(f'has_next_page: {has_next_page}')
-            # TODO: If page 1 and not in requests set, extract hashtags and submit to burst scrape 1 page
+            # TODO: Done: If page 1 and not in requests set, extract hashtags and submit to burst scrape 1 page
             print(f'related_burst: {related_burst}')
            
 
@@ -458,7 +415,7 @@ class InstaloaderContextTommy(InstaloaderContext):
             conn_time = conn_end - conn_start
             # print(f'conn_time: {conn_time}')
             # print(f'ADD {proxy}:{conn_time}')
-            # TODO: SET PROXY SCORE REDIS
+            # TODO: Done: SET PROXY SCORE REDIS
                 # if resp.status_code == 400:
                 #     print("error 400")
                 # if resp.status_code == 404:
@@ -491,7 +448,6 @@ class InstaloaderContextTommy(InstaloaderContext):
                 return json.loads(match.group(1))
             else:
                 resp_json = resp.json()
-            # TODO: if 'status' in resp_json and resp_json['status'] != "ok":
             if 'status' in resp_json and resp_json['status'] != "ok":
                 print(f'error: attempt_no {_attempt}')
                 print(f'_attempt: {_attempt} PROXY: {proxies}')

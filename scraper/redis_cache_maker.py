@@ -23,7 +23,7 @@ def cache(tag):
     #         if added:
     #             r.lpush('cache:queue:ready', tag)
 
-    # TODO: IF NO RESULTS IN 1ST TWO PAGES, RENDER A RELATED PAGE
+    # TODO: Done: IF NO RESULTS IN 1ST TWO PAGES, RENDER A RELATED PAGE
     stream = r.xread({stream_key: b"0-0"}, block=10000)
     if stream:
         stream = stream[0][1]
@@ -56,7 +56,6 @@ def cache(tag):
     # CACHE COMPLETE. DEL FROM QUEUE
     r.srem('set:cache:queue', tag)
     
-# TODO WHATS UP
 while True:
     print('Cache Machine Ready! Waiting for tags from redis...')
     # TODO: DONE: TOPK TOP100 REQUESTS

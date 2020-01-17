@@ -10,7 +10,6 @@ scraper = InstaloaderTommy(mode='burst')
 
 
 def scrape(second_tag, root_tag, num_to_scrape):
-    # TODO:NAMESPACE so I can do eg TODO:redis:BigOFunc
     # r.delete(f'scrape:finished:{tag}')
     print(f'scrape {second_tag} {root_tag}')
     with scraper:
@@ -20,7 +19,6 @@ def scrape(second_tag, root_tag, num_to_scrape):
                     hashtag=second_tag, is_root_tag=root_tag,
                     dump_page=True, resume=False,
                     duplicate_check=False, related_burst=True):
-                # TODO:Should I control scraping here or in class?
                 total += count
                 # Trigger cache generator
                 print(f'scraped: {total}')
@@ -55,7 +53,7 @@ while True:
     second_tag = r.brpop('list:burst')[1] # add rootTag tuple
     # if random.randint(1,2) == 2:
     #     time.sleep(0.4)
-    root_tag = r.get(f'root:tag:{second_tag}') #TODO: is NONE why?
+    root_tag = r.get(f'root:tag:{second_tag}')
     
     # r.delete(f'root:tag:{second_tag}')
 
