@@ -11,11 +11,8 @@ scraper = InstaloaderTommy()
 # ... here is some related stuff...
 # return related tags
 
-# TODO: Done: RELATED RESULTS
-# TODO: Done: set recent key: CHECK TIME SINCE SCRAPE
 
 # TODO: ADD ALL BLOOM / CUCKOO FILTER
-# TODO: Done: CHECK HASHTAG/POSTID LIST AND STOP ON DUPLICATE
 # TODO: CHECK AGAINST GLOBAL LIST AND RETRIEVE PREDICTION
 # TODO: GEAR CHECK FOR EXISTING PREDICTION
 
@@ -43,13 +40,10 @@ def scrape(tag, num_to_scrape):
                     if scrape_more:
                         r.lpush('archive:tagsin', tag)
                     total = 0
-                    # TODO: DONE: ONLY CACHE READY WHEN STREAM OUT > 10
-                    # TODO: DONE: ADD TO SET IF SUCCESS LPUSH
                     return
         except:
             return
 # TODO: REWRITE IN CRYSTAL
-# TODO: Done: STOP SCRAPING WHEN DUPLICATE FOUND
 # CUCKOO FILTER?
 # store every prediction. if exists retrieve prediction else predict.
 # TODO: VARY SCRAPING BY SIZE AND CONTENT OF HASHTAG FEED
@@ -59,9 +53,7 @@ while True:
     num_to_scrape = 1800
 
     print('Ready! Waiting for a hashtag from redis...')
-    # TODO: Done: background scraping. pop a tag and resume page and total
     # TODO: SUBSCRIBE AND BARK
-    # TODO: Done: BACKGROUND SCRAPE HISTORIC    
 
     tag = r.brpop('list:tagsin')[1] # add rootTag
     r.srem('tagsin', tag)
@@ -79,11 +71,6 @@ while True:
     p.start()
     r.expire(f'scraped:recent:{tag}', 600)
 
-# TODO: DONE - IF ARCHIVAL SCAN DON'T STOP
-# TODO: DONE - Fan out search
 
 # TODO: RACE Proxies
-# TODO: Done: Find related tags results
-# TODO: Done: CREATE AN INDEX TAG > POST
 # TODO: CHECK IF ID EXIST AND STOP SCRAPING
-# TODO: Done: Dump page to redisjson

@@ -151,6 +151,7 @@ def get_end_cursor(hashtag):
     return True
 
 
+
 class InstaloaderTommy(Instaloader):
     def __init__(self, mode="normal"):
         super().__init__('Instaloader')
@@ -161,38 +162,40 @@ class InstaloaderTommy(Instaloader):
         self.download_comments=True
         print("CLASS INIT: InstaloaderTommy Inint")
 
+
     def update_comments(self, filename: str, post: Post) -> None:
-        print("NEW update_comments")
-        def _postcommentanswer_asdict(comment,parentId):
-            print("NEW _postcommentanswer")
-            # update_comments_db(comment,post,parentId)
+
+        def _postcommentanswer_asdict(comment):
             return {'id': comment.id,
                     'created_at': int(comment.created_at_utc.replace(tzinfo=timezone.utc).timestamp()),
                     'text': comment.text,
-                    'owner': comment.owner._asdict()}
+                    'owner': comment.owner._asdict(),
+                    'likes_count': comment.likes_count}
 
         def _postcomment_asdict(comment):
-            print("NEW _postcomment")
-            return {**_postcommentanswer_asdict(comment,comment.id),
-                    'answers': sorted([_postcommentanswer_asdict(answer,comment.id) for answer in comment.answers],
-                                        key=lambda t: int(t['id']),
-                                        reverse=True)}
+            return {**_postcommentanswer_asdict(comment),
+                    'answers': sorted([_postcommentanswer_asdict(answer) for answer in comment.answers],
+                                      key=lambda t: int(t['id']),
+                                      reverse=True)}
 
         def get_unique_comments(comments, combine_answers=False):
             if not comments:
                 return list()
             comments_list = sorted(sorted(list(comments), key=lambda t: int(t['id'])),
-                                    key=lambda t: int(t['created_at']), reverse=True)
+                                   key=lambda t: int(t['created_at']), reverse=True)
             unique_comments_list = [comments_list[0]]
             for x, y in zip(comments_list[:-1], comments_list[1:]):
                 if x['id'] != y['id']:
                     unique_comments_list.append(y)
-                elif combine_answers:
-                    combined_answers = unique_comments_list[-1].get('answers') or list()
-                    if 'answers' in y:
-                        combined_answers.extend(y['answers'])
-                    unique_comments_list[-1]['answers'] = get_unique_comments(combined_answers)
+                else:
+                    unique_comments_list[-1]['likes_count'] = y.get('likes_count')
+                    if combine_answers:
+                        combined_answers = unique_comments_list[-1].get('answers') or list()
+                        if 'answers' in y:
+                            combined_answers.extend(y['answers'])
+                        unique_comments_list[-1]['answers'] = get_unique_comments(combined_answers)
             return unique_comments_list
+        
         filename += '_comments.json'
         try:
             with open(filename) as fp:
@@ -206,6 +209,7 @@ class InstaloaderTommy(Instaloader):
             with open(filename, 'w') as file:
                 file.write(json.dumps(list(filter(lambda t: int(t['id']) not in answer_ids, comments)), indent=4))
             self.context.log('comments', end=' ', flush=True)
+
 
     def get_hashtag_posts(
             self, hashtag: str, archive_run=False,
@@ -530,7 +534,9 @@ class TPost(Post):
             return PostCommentAnswer(id=int(node['id']),
                                      created_at_utc=datetime.utcfromtimestamp(node['created_at']),
                                      text=node['text'],
-                                     owner=Profile(self._context, node['owner']))
+                                     owner=Profile(self._context, node['owner']),
+                                     likes_count=node['edge_liked_by']['count'])
+
 
         def _postcommentanswers(node):
             if 'edge_threaded_comments' not in node:

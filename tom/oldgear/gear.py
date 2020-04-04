@@ -86,12 +86,6 @@ def pre_proc_text(x):
     caption = ' '.join(caption)
     caption = caption.rstrip()
 
-    # print(f'PRE PROCESSOR TIME: {end - start}')
-        # print(f't1: {end2 - start} t2: {end3 - end2} t3: {end4 - end3}')
-
-        # print(f'cap len: {len(caption)}') #not len slow 
-        # print(f'tags len: {len(tags)}')
-        # print(caption)
     return x, caption, caption_text, tags
 
 
@@ -135,7 +129,6 @@ def is_too_short(x):
 
 
 def runModel(x):
-    # start = time.perf_counter()
     caption = x[1]
     sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
@@ -148,16 +141,6 @@ def runModel(x):
         'OUTPUTS', 'out_label', 'out_probs')
     out = execute(
         'AI.TENSORGET', 'out_label', 'VALUES')
-    # end = time.perf_counter()
-    # print(f'NEW: {end - start}')
-    # print(out[2][0])
-    # print(caption)
-    # if out[2][0] != 0:
-    rootTag = x[0]['rootTag']
-    key = f'tag:out1:{rootTag}'
-    print(key)
-    execute('XADD', key, 'MAXLEN', '~', 2500, '*', 'res', out[2][0])
-    print(out)
     
     return out[2][0]
 
@@ -202,24 +185,20 @@ def storeResults(x):
         'postId', postId,
         'imgUrl', x[0]['imgUrl'],
         'likes', x[0]['likes'],
-        'comments_count', x[0]['comments'])
+        'comments_count', x[0]['comments'],
+        'shortcode', x[0]['shortcode'])
         # 'typename', x[0]['typename'],
         # 'owner_id', x[0]['owner_id'],
         # 'ig_timestamp', x[0]['timestamp'],
         # 'retrieved_date', x[0]['scrape_date'])
     
     # TODO: Done:Cache maker IF STREAM LEN > 10 SET CACHE FLAG
-    # end1 = time.perf_counter()
-    # print(f'Timer1: {end1 - start}')
 
     # TODO: DONE REFACTOR AND MOVE THIS OUT OF THE GEAR
     # AND IN TO THE CACHE HANDLER
 
-    # TODO: DONE: CACHE MAKER CONTAINS CACHING LOGIC 
-    
+    # TODO: DONE: CACHE MAKER CONTAINS CACHING LOGIC
     res = execute('zincrby', 'topz:products', 1, rootTag)
-    print(f'zincry response: {res}')
-    print(x[0]['relatedTag'])
     if x[0]['relatedTag'] == 'False':
         for tag in x[3]:
             execute('SADD', f'post:tags:{postId}', tag)
