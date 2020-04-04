@@ -6,9 +6,10 @@ import pickle
 import numpy as np
 import time
 from redis import Redis
+
 conn = Redis()
 
-vectorizer = pickle.load(open("/home/tommy/development/vectorizer.pickle", "rb"))
+vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
 stopwords = get_stop_words('english')
 
 word_list = ['sold', 'forsale', 'sale',
