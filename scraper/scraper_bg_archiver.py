@@ -51,7 +51,7 @@ def archive_scrape(tag):
                     r.lpush('cache:queue:ready', tag)
                 if total > num_to_scrape:
                     print('SLEEP')
-                    time.sleep(60)
+                    time.sleep(1)
                     total = 0
                     not_exists = r.sadd('tags:archive:queue', tag)
                     print(f'not_exist: {not_exists}')

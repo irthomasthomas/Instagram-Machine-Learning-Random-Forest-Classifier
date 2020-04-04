@@ -11,6 +11,7 @@ rdb = redis.Redis(decode_responses=True)
 input = argv[1]
 startkey = f'tag:posts:{input}'
 
+
 # Get all posts under tag:posts: startkey
 posts = rdb.smembers(startkey) # 10 #sweatshirts
 print(f'posts: {len(posts)}')
@@ -24,11 +25,14 @@ for postId in posts:
     key = f'post:tags:{postId}'
     for tag in rdb.smembers(key):
         hashtags.add(tag)
+        rdb.delete(f'tags:out:{tag}')
+
 print(f'all tags set: {len(hashtags)}')
 
 # get all tag:posts for tags in hashtags
 related_posts = set()
 for tag in hashtags:
+    rdb.delete(f'tags:out:{tag}')
     for post in rdb.smembers(f'tag:posts:{tag}'):
         # print(f'related post {post}')
         related_posts.add(post)
@@ -37,12 +41,14 @@ related_tags = set()
 for postId in related_posts:
     key = f'post:tags:{postId}'
     for tag in rdb.smembers(key):
+        rdb.delete(f'tags:out:{tag}')
         sketch = f'sketch:all:{tag}'
         rdb.delete(sketch)
         related_tags.add(tag)
 
 next_posts = set()
 for tag in related_tags:
+    rdb.delete(f'tags:out:{tag}')
     key = f'tag:posts:{tag}'
     for post in rdb.smembers(key):
         next_posts.add(post)

@@ -23,7 +23,6 @@ def cache(tag):
     #         if added:
     #             r.lpush('cache:queue:ready', tag)
 
-    # TODO: Done: IF NO RESULTS IN 1ST TWO PAGES, RENDER A RELATED PAGE
     stream = r.xread({stream_key: b"0-0"}, block=10000)
     if stream:
         stream = stream[0][1]
@@ -58,7 +57,6 @@ def cache(tag):
     
 while True:
     print('Cache Machine Ready! Waiting for tags from redis...')
-    # TODO: DONE: TOPK TOP100 REQUESTS
     min_results_to_cache = 5
     tag = r.brpop('cache:queue:ready')[1]
     print(f'cache request: {tag}')
