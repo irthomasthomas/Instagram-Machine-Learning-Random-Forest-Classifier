@@ -91,24 +91,28 @@ async def get_prox(proxies):
         print(proxy)
         return proxy
 
-while True:    
-    print('Getting github proxies...')
-    start_time = datetime.now()
+def main():
+    while True:    
+        print('Getting github proxies...')
+        start_time = datetime.now()
 
-    proxylist = getproxies()
-    goodproxies = []
-    pool = ThreadPool(len(proxylist))
+        proxylist = getproxies()
+        goodproxies = []
+        pool = ThreadPool(len(proxylist))
 
-    goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
+        goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
 
-    print(f'found {len(goodproxies)} proxies')
-    # proxies = asyncio.Queue()
-    # broker = Broker(proxies)
-    # tasks = asyncio.gather(
-    #     broker.find(types=['HTTPS'], limit=10), get_prox(proxies)
-    # )    
-    sleep(600)
+        print(f'found {len(goodproxies)} proxies')
+        # proxies = asyncio.Queue()
+        # broker = Broker(proxies)
+        # tasks = asyncio.gather(
+        #     broker.find(types=['HTTPS'], limit=10), get_prox(proxies)
+        # )    
+        sleep(600)
+    
 
+if __name__ == "__main__":
+    main()
 
 # with open("pythonproxies.json","w") as file:
 #         json.dump(proxylist, file)

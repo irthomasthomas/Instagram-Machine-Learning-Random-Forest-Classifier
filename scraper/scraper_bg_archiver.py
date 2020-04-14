@@ -62,23 +62,24 @@ def archive_scrape(tag):
         except:
             return
 
-while True:
-    print('Archiver Ready! Waiting for a hashtag from redis...')
-    
-    tag = r.brpop('archive:tagsin')[1] # add rootTag
-    print(f'start: {tag}')
-    r.srem('tags:archive:queue', tag)
-    if r.exists(f'scrape:complete:{tag}'):
-        print(f'archiving already complete:{tag}')
-        continue
-    p = Process(target=archive_scrape, args=(tag, ))
-    p.start()
+def main():
+    while True:
+        print('Archiver Ready! Waiting for a hashtag from redis...')
+        
+        tag = r.brpop('archive:tagsin')[1] # add rootTag
+        print(f'start: {tag}')
+        r.srem('tags:archive:queue', tag)
+        if r.exists(f'scrape:complete:{tag}'):
+            print(f'archiving already complete:{tag}')
+            continue
+        p = Process(target=archive_scrape, args=(tag, ))
+        p.start()
 
-# TODO: IF ARCHIVAL SCAN DON'T STOP
-# TODO: Fan out search
+    # TODO: IF ARCHIVAL SCAN DON'T STOP
+    # TODO: Fan out search
 
-# TODO: RACE Proxies
-# TODO: Find related tags results
-# TODO: CREATE AN INDEX TAG > POST
-# TODO: CHECK IF ID EXIST AND STOP SCRAPING
-# TODO: Dump page to redisjson
+    # TODO: RACE Proxies
+    # TODO: Find related tags results
+    # TODO: CREATE AN INDEX TAG > POST
+    # TODO: CHECK IF ID EXIST AND STOP SCRAPING
+    # TODO: Dump page to redisjson

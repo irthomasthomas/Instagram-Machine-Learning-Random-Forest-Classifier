@@ -40,33 +40,34 @@ def scrape(second_tag, root_tag, num_to_scrape):
                     return
         except:
             return
-            
-while True:
 
-    num_to_scrape = 50
+def main():         
+    while True:
 
-    print('Ready! Waiting for a hashtag from redis...')
-    # TODO:DONE:bg_scraper.py background scraping. pop a tag and resume page and total
-    # TODO: HOW TO BENCHMARK ON VARIABLE SPEED CPU
+        num_to_scrape = 50
 
-    # tags = r.brpop('list:burst')[1] # add rootTag tuple
-    second_tag = r.brpop('list:burst')[1] # add rootTag tuple
-    # if random.randint(1,2) == 2:
-    #     time.sleep(0.4)
-    root_tag = r.get(f'root:tag:{second_tag}')
-    
-    # r.delete(f'root:tag:{second_tag}')
+        print('Ready! Waiting for a hashtag from redis...')
+        # TODO:DONE:bg_scraper.py background scraping. pop a tag and resume page and total
+        # TODO: HOW TO BENCHMARK ON VARIABLE SPEED CPU
 
-    print(f'BURST REQ: root:{root_tag} second:{second_tag} ')
-    
-    # 
-    # scraped = r.get(f'scraped:recent:{tag}')
-    # # print(f'scraped_tag: {scraped}')
-    # if scraped:
-    #     print(f'FOUND SCRAPED_RECENT KEY')
-    #     print(f'ABORTING')
-    #     continue
-    # else:
-    #     r.set(key, "True")
-    p = Process(target=scrape, args=(second_tag, root_tag, num_to_scrape))
-    p.start()
+        # tags = r.brpop('list:burst')[1] # add rootTag tuple
+        second_tag = r.brpop('list:burst')[1] # add rootTag tuple
+        # if random.randint(1,2) == 2:
+        #     time.sleep(0.4)
+        root_tag = r.get(f'root:tag:{second_tag}')
+        
+        # r.delete(f'root:tag:{second_tag}')
+
+        print(f'BURST REQ: root:{root_tag} second:{second_tag} ')
+        
+        # 
+        # scraped = r.get(f'scraped:recent:{tag}')
+        # # print(f'scraped_tag: {scraped}')
+        # if scraped:
+        #     print(f'FOUND SCRAPED_RECENT KEY')
+        #     print(f'ABORTING')
+        #     continue
+        # else:
+        #     r.set(key, "True")
+        p = Process(target=scrape, args=(second_tag, root_tag, num_to_scrape))
+        p.start()

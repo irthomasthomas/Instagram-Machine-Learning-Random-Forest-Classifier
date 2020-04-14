@@ -9,13 +9,8 @@ from redis import Redis
 
 conn = Redis()
 
-vectorizer = pickle.load(open("/home/tommy/development/projects/scrape/tom/oldgear/vectorizer.pickle", "rb"))
+vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
 stopwords = get_stop_words('english')
-
-word_list = ['sold', 'forsale', 'sale',
-        'auction', 'bid', 'dibs', 'bidding',
-        'selling', 'sell', 'pay', 'paypal',
-        '$', '£', '€', 'dm', 'purchase']
 
 def pre_proc_text(x):
 
@@ -26,9 +21,6 @@ def pre_proc_text(x):
         def repl(m):
             tag = m.group(0)[1:]
             tags.append(tag)
-            # TODO: INSERT TAGS INTO REDIS LIST HERE
-            # DELETE THE LIST LATER IF NOT REQUIRED
-            # TODO: GEARS PIPELINE
             return ""
 
         caption = regexp.sub(repl, caption.lower())
@@ -57,15 +49,8 @@ def pre_proc_text(x):
     def remove_stopwords(text, stopword):
         text = [word for word in text if word not in stopword]
         return text
-    
-    # TODO: BREAK ON DUPE
-    # TODO: GET WORDS IN LIST
-    #############################################
-    
+ 
     caption = x['caption']
-    # print(f'{postId}:{rootTag}')
-    # execute('cmsIncrBy', 'sketch:allposts', postId, '1')
-    # execute('cmsIncrBy', f'sketch:all:{rootTag}', postId, '1')
 
     caption, tags = extract_hashtags(caption)
     
@@ -76,14 +61,6 @@ def pre_proc_text(x):
     caption = tokenize(caption)
     caption = remove_stopwords(caption, stopwords)
 
-    # TODO: WORD_LIST
-        # word_freq = []
-        # print(word_list)
-        # for w in word_list:
-        #     word_freq.append(word_list.count(w))
-        # result = list(zip(word_list, word_freq))
-        # print(result)
-    
     caption = ' '.join(caption)
     caption = caption.rstrip()
 
@@ -94,20 +71,15 @@ def is_first_page(x):
     ''' If this is the first page
         add tags to queue:burst
         or else carry on through gear '''
-    # TODO: MOVE THIS TO SCRAPER
-    # TODO: Ignore if roottag = newtag
     if x[0]['is_first_page'] == 'False':
         return x
     else:
         rootTag = x[0]['rootTag']
-        # print(f'rootTag: {rootTag}')
-        # print('is FIRST_PAGE') # ok
         t = 1
         for tag in x[3]:
             if tag == rootTag:
                 continue
             key = f'root:tag:{tag}'
-            # print(key) seems to work.
             execute('SET', key, rootTag)
             added = execute('SADD', 'queue:burst', tag)
             if added:
@@ -116,7 +88,6 @@ def is_first_page(x):
                 return x
             else:
                 t += 1
-        # print('1st page check')
         return x
 
 
@@ -128,26 +99,7 @@ def is_too_short(x):
     else:
         return False
 
-
-def runModel(x):
-    caption = x[1]
-    sample = vectorizer.transform([caption]).toarray()
-    ba = np.asarray(sample, dtype=np.float32)
-    execute(
-        'AI.TENSORSET', 'auction:tensor', 'FLOAT',
-        '1', '80', 'BLOB', ba.tobytes())
-    execute(
-        'AI.MODELRUN', 'auction:model',
-        'INPUTS', 'auction:tensor',
-        'OUTPUTS', 'out_label', 'out_probs')
-    out = execute(
-        'AI.TENSORGET', 'out_label', 'VALUES')
-    
-    return out[2][0]
-
-
 def runModel2(x):
-    # print(f'runModel: {x}')
     caption = x[1]
     sample = vectorizer.transform([caption]).toarray()
     ba = np.asarray(sample, dtype=np.float32)
@@ -165,8 +117,6 @@ def runModel2(x):
 
 def storeResults(x):
     ''' store to output stream '''
-    # start = time.perf_counter() # time 0.0001
-    # print(len(x[2]))
     # TODO: PIPELINE
 
     rootTag = x[0]['rootTag']
@@ -175,9 +125,6 @@ def storeResults(x):
     streamKey = f'tags:out:{rootTag}'
     link = f'https://www.instagram.com/p/{shortcode}'
 
-
-    # execute('SADD', 'trackedTags', rootTag)
-    # TODO: Need to identify related
     execute('XADD', streamKey,
         'MAXLEN', '~', 2500, '*',
         'link', link, 'caption_text', x[2],
@@ -188,17 +135,7 @@ def storeResults(x):
         'likes', x[0]['likes'],
         'comments_count', x[0]['comments'],
         'shortcode', x[0]['shortcode'])
-        # 'typename', x[0]['typename'],
-        # 'owner_id', x[0]['owner_id'],
-        # 'ig_timestamp', x[0]['timestamp'],
-        # 'retrieved_date', x[0]['scrape_date'])
-    
-    # TODO: Done:Cache maker IF STREAM LEN > 10 SET CACHE FLAG
 
-    # TODO: DONE REFACTOR AND MOVE THIS OUT OF THE GEAR
-    # AND IN TO THE CACHE HANDLER
-
-    # TODO: DONE: CACHE MAKER CONTAINS CACHING LOGIC
     res = execute('zincrby', 'topz:products', 1, rootTag)
     if x[0]['relatedTag'] == 'False':
         for tag in x[3]:
@@ -210,16 +147,6 @@ def storeResults(x):
         
         execute('cms.IncrBy', f'sketch:out:{rootTag}', postId, '1') 
     
-    # try:
-    #     relatedTag = x[0]['relatedTag']
-    # except KeyError:
-
-    # Add The stream key to a stream
-    # block read 1st stream
-    # get stream key
-    # end2 = time.perf_counter()
-    # print(f'timer2: {end2 - end1}')
-
 
 gb = GearsBuilder('StreamReader')
 gb.map(pre_proc_text)
@@ -228,7 +155,3 @@ gb.filter(is_too_short)
 gb.filter(runModel2)
 gb.foreach(storeResults)
 gb.register('post:')
-
-# TODO: look for words in sets 
-# E.G. "FOR SALE" "SOLD" "BUY NOW" "BID" "DIBS"
-# IF IT EXISTS STORE THEM

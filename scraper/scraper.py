@@ -48,29 +48,32 @@ def scrape(tag, num_to_scrape):
 # store every prediction. if exists retrieve prediction else predict.
 # TODO: VARY SCRAPING BY SIZE AND CONTENT OF HASHTAG FEED
 
-while True:
+def main():
+    while True:
 
-    num_to_scrape = 1800
+        num_to_scrape = 1800
 
-    print('Ready! Waiting for a hashtag from redis...')
-    # TODO: SUBSCRIBE AND BARK
+        print('Ready! Waiting for a hashtag from redis...')
+        # TODO: SUBSCRIBE AND BARK
 
-    tag = r.brpop('list:tagsin')[1] # add rootTag
-    r.srem('tagsin', tag)
-    print(f'SCRAPE REQ: {tag}')
+        tag = r.brpop('list:tagsin')[1] # add rootTag
+        r.srem('tagsin', tag)
+        print(f'SCRAPE REQ: {tag}')
 
-    scraped = r.get(f'scraped:recent:{tag}')
-    # print(f'scraped_tag: {scraped}')
-    if scraped:
-        print(f'FOUND SCRAPED_RECENT KEY')
-        print(f'ABORTING')
-        continue
-    else:
-        r.set(f'scraped:recent:{tag}', "True")
-    p = Process(target=scrape, args=(tag, num_to_scrape))
-    p.start()
-    r.expire(f'scraped:recent:{tag}', 600)
+        scraped = r.get(f'scraped:recent:{tag}')
+        # print(f'scraped_tag: {scraped}')
+        if scraped:
+            print(f'FOUND SCRAPED_RECENT KEY')
+            print(f'ABORTING')
+            continue
+        else:
+            r.set(f'scraped:recent:{tag}', "True")
+        p = Process(target=scrape, args=(tag, num_to_scrape))
+        p.start()
+        r.expire(f'scraped:recent:{tag}', 600)
 
+if __name__ == "__main__":
+    main()
 
 # TODO: RACE Proxies
 # TODO: CHECK IF ID EXIST AND STOP SCRAPING

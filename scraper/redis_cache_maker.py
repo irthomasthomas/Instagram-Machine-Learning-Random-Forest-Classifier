@@ -50,28 +50,27 @@ def cache(tag):
         page_response = f'{{"total":{total},"total_pages":{total_pages},"results":{json_result}}}'
         key = f'/enqueue?tag={tag}&page={page}'
         # TODO: Cache expire FORMULA. results count 5 - 5000
-        key = r.set(key, page_response, ex=6600)
+        key = r.set(key, page_response, ex=660)
         page += 1
     # CACHE COMPLETE. DEL FROM QUEUE
     r.srem('set:cache:queue', tag)
-    
-while True:
-    print('Cache Machine Ready! Waiting for tags from redis...')
-    min_results_to_cache = 5
-    tag = r.brpop('cache:queue:ready')[1]
-    print(f'cache request: {tag}')
-    p = Process(target=cache, args=(tag,))
-    p.start()
-    # if r.xlen(f'tags:out:{tag}') > min_results_to_cache:
-    #     p = Process(target=cache, args=(tag,))
-    #     p.start()
-    # else:
-    #     r.lpush('cache:queue:ready', tag)
-    #     continue
-    # 
-    print(f'Received cache request for {tag}')
-    # rb.topkAdd('topk:10requests', tag)
-    print(time.strftime('%X %x %Z'))
-    
-    
-    
+
+def main():    
+    while True:
+        print('Cache Machine Ready! Waiting for tags from redis...')
+        min_results_to_cache = 5
+        tag = r.brpop('cache:queue:ready')[1]
+        print(f'cache request: {tag}')
+        p = Process(target=cache, args=(tag,))
+        p.start()
+        # if r.xlen(f'tags:out:{tag}') > min_results_to_cache:
+        #     p = Process(target=cache, args=(tag,))
+        #     p.start()
+        # else:
+        #     r.lpush('cache:queue:ready', tag)
+        #     continue
+        # 
+        print(f'Received cache request for {tag}')
+        # rb.topkAdd('topk:10requests', tag)
+        print(time.strftime('%X %x %Z'))
+        
