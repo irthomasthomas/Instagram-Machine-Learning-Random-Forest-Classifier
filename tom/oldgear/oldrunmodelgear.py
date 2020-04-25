@@ -8,15 +8,13 @@ import time
 from redis import Redis
 
 
+vectorizer = pickle.load(open("/root/scrape/tom/oldgear/vectorizer.pickle", "rb"))
+stopwords = get_stop_words('english')
 
 word_list = ['sold', 'forsale', 'sale',
         'auction', 'bid', 'dibs', 'bidding',
         'selling', 'sell', 'pay', 'paypal',
         '$', '£', '€', 'dm', 'purchase']
-
-vectorizer = pickle.load(open("/root/scrape/tom/oldgear/vectorizer.pickle", "rb"))
-stopwords = get_stop_words('english')
-
 
 def pre_proc_text(x):
 
@@ -128,6 +126,24 @@ def is_too_short(x):
         return True
     else:
         return False
+
+
+def oldrunModel(x):
+    caption = x[1]
+    sample = vectorizer.transform([caption]).toarray()
+    ba = np.asarray(sample, dtype=np.float32)
+    execute(
+        'AI.TENSORSET', 'auction:tensor', 'FLOAT',
+        '1', '80', 'BLOB', ba.tobytes())
+    execute(
+        'AI.MODELRUN', 'auction:model',
+        'INPUTS', 'auction:tensor',
+        'OUTPUTS', 'out_label', 'out_probs')
+    out = execute(
+        'AI.TENSORGET', 'out_label', 'VALUES')
+    
+    return out[2][0]
+
 
 def runModel(x):
     conn = Redis()

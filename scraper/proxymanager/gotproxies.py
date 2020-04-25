@@ -5,8 +5,8 @@ from datetime import datetime
 import json
 from redis import Redis
 from time import perf_counter, sleep
-from proxybroker import Broker
-import asyncio
+# from proxybroker import Broker
+# import asyncio
 
 # TODO: RUN ON LOOP
 rdb = Redis()
@@ -30,9 +30,7 @@ def check_proxy(proxy):
     except:
         return
 
-def getproxies():
-    stime = datetime.now()
-
+def getproxies1():
     # LIST 1
     with open("proxy.list","w") as jf:
         jf.write(get("https://raw.githubusercontent.com/fate0/proxylist/master/proxy.list").text)
@@ -40,6 +38,7 @@ def getproxies():
     with open("proxy.list","r") as jf:
         for x in jf:
             jsonlist.append(json.loads(x))
+
     proxylist = []
     for p in jsonlist:
         ip = str(p['host'])+":"+str(p['port'])
@@ -60,6 +59,10 @@ def getproxies():
                 proxylist.append(ip)
     print("LIST 2: " + str(len(proxylist)))
     # LIST 3
+    return proxylist
+
+def getproxies2():
+    proxylist = []
     for line in get("https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list.txt").content.splitlines(True):
         p = line.decode().rstrip().split(" ")[0].split(":")
         try:
@@ -79,36 +82,38 @@ def getproxies():
         except:
             continue
     print("LIST 4: " + str(len(proxylist)))
-    etime = datetime.now()
     return proxylist
 
-async def get_prox(proxies):
-    while True:
-        print('GET_PROXY')
-        proxy = await proxies.get()
-        if proxy is None:
-            break
-        print(proxy)
-        return proxy
+
+def test_proxy_list(proxylist):
+    goodproxies = []
+    pool = ThreadPool(len(proxylist))
+
+    goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
+    pool.close()
+    pool.join()
+    print(f'found {len(goodproxies)} proxies')
 
 def main():
     while True:    
-        print('Getting github proxies...')
         start_time = datetime.now()
+        
+        print('Getting github proxies...')
 
-        proxylist = getproxies()
-        goodproxies = []
-        pool = ThreadPool(len(proxylist))
-
-        goodproxies = [x for x in pool.map(check_proxy, proxylist) if x is not None]
-
-        print(f'found {len(goodproxies)} proxies')
+        proxylist1 = getproxies1()
+        test_proxy_list(proxylist1)
+        sleep(300)
+        proxylist2 = getproxies2()
+        test_proxy_list(proxylist2)
+        
+        endtime = datetime.now()
+        print("Time: " +str(endtime - start_time))
         # proxies = asyncio.Queue()
         # broker = Broker(proxies)
         # tasks = asyncio.gather(
         #     broker.find(types=['HTTPS'], limit=10), get_prox(proxies)
         # )    
-        sleep(600)
+        sleep(300)
     
 
 if __name__ == "__main__":

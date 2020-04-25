@@ -46,7 +46,7 @@ def main():
 
         num_to_scrape = 50
 
-        print('Ready! Waiting for a hashtag from redis...')
+        print('BURST SCRAPER READY! Waiting for a hashtag from redis...')
         # TODO:DONE:bg_scraper.py background scraping. pop a tag and resume page and total
         # TODO: HOW TO BENCHMARK ON VARIABLE SPEED CPU
 
@@ -56,7 +56,7 @@ def main():
         #     time.sleep(0.4)
         root_tag = r.get(f'root:tag:{second_tag}')
         
-        # r.delete(f'root:tag:{second_tag}')
+        r.delete(f'root:tag:{second_tag}')
 
         print(f'BURST REQ: root:{root_tag} second:{second_tag} ')
         

@@ -57,7 +57,7 @@ def cache(tag):
 
 def main():    
     while True:
-        print('Cache Machine Ready! Waiting for tags from redis...')
+        print('CACHE MACHINE READY! Waiting for tags from redis...')
         min_results_to_cache = 5
         tag = r.brpop('cache:queue:ready')[1]
         print(f'cache request: {tag}')

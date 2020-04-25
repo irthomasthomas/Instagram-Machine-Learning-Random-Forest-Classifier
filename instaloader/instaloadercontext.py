@@ -131,7 +131,6 @@ class InstaloaderContext:
 
     def _default_http_header(self, empty_session_only: bool = False) -> Dict[str, str]:
         """Returns default HTTP header we use for requests."""
-        print("lib: default_http_header")
         header = {'Accept-Encoding': 'gzip, deflate',
                   'Accept-Language': 'en-US,en;q=0.8',
                   'Connection': 'keep-alive',
@@ -152,7 +151,6 @@ class InstaloaderContext:
 
     def get_anonymous_session(self) -> requests.Session:
         """Returns our default anonymous requests.Session object."""
-        print("lib_GET_ANONYMOUS_SESSION")
         session = requests.Session()
         session.cookies.update({'sessionid': '', 'mid': '', 'ig_pr': '1',
                                 'ig_vw': '1920', 'csrftoken': '',

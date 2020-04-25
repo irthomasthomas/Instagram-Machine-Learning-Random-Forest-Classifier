@@ -142,7 +142,6 @@ def save_related_result(page, relatedTag, rootTag):
     pipe.execute()
 
 def default_user_agent() -> str:
-    print(f'FUNC: default_user_agent')
     return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' \
            '(KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36'
 
@@ -160,7 +159,6 @@ class InstaloaderTommy(Instaloader):
         else:
             self.context = InstaloaderContextTommy(max_connection_attempts=10)
         self.download_comments=True
-        print("CLASS INIT: InstaloaderTommy Inint")
 
 
     def update_comments(self, filename: str, post: Post) -> None:
@@ -343,7 +341,6 @@ class InstaloaderContextTommy(InstaloaderContext):
             quiet: bool = False,
             user_agent: Optional[str] = None,
             max_connection_attempts: int = 3):
-        print("CONTEXT INIT")
 
         proxy = self.change_proxy()
         self.proxies = {'https' : proxy}
@@ -372,7 +369,6 @@ class InstaloaderContextTommy(InstaloaderContext):
     def change_proxy(self):
         '''Delete proxy and get new proxy'''
         proxy = rdb.zpopmin('proxies:')[0]        
-        print(f'pop proxy: {proxy[0]}:{proxy[1]}')
         return proxy[0]
 
 
@@ -394,8 +390,6 @@ class InstaloaderContextTommy(InstaloaderContext):
         sess = session if session else self._session
         proxy = self.change_proxy()
         proxies = {"https" : proxy}
-        print(f'get_json ')
-
         # for attempt_no in range(30):
         #     print(f'attempt: {attempt_no}')
         try:

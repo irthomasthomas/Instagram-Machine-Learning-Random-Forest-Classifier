@@ -53,7 +53,7 @@ def main():
 
         num_to_scrape = 1800
 
-        print('Ready! Waiting for a hashtag from redis...')
+        print('MAIN SCRAPER READY! Waiting for a hashtag from redis...')
         # TODO: SUBSCRIBE AND BARK
 
         tag = r.brpop('list:tagsin')[1] # add rootTag

@@ -64,7 +64,7 @@ def archive_scrape(tag):
 
 def main():
     while True:
-        print('Archiver Ready! Waiting for a hashtag from redis...')
+        print('ARCHIVER READY! Waiting for a hashtag from redis...')
         
         tag = r.brpop('archive:tagsin')[1] # add rootTag
         print(f'start: {tag}')

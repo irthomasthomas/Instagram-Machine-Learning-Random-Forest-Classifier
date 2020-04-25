@@ -22,7 +22,7 @@ def burst():
 
 if __name__ == "__main__":
     print("hello")
-    Process(target=getproxies).start()
+    # Process(target=getproxies).start()
     Process(target=scraper).start()
     Process(target=cachemaker).start()
     Process(target=archiver).start()

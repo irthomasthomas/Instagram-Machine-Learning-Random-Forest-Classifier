@@ -1,0 +1,912 @@
+hello
+instaloadercontext
+lib_GET_ANONYMOUS_SESSION
+lib: default_http_header
+CONTEXT INIT
+pop proxy: 187.130.139.197:8080:0.5110796939989086
+FUNC: default_user_agent
+lib_GET_ANONYMOUS_SESSION
+lib: default_http_header
+CLASS INIT: InstaloaderTommy Inint
+Ready! Waiting for a hashtag from redis...
+SCRAPE REQ: bubblecap
+pop proxy: 209.141.46.133:8080:0.5402941909997026
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1 (Caused by ProxyError('Cannot connect to proxy.', timeout('_ssl.c:835: The handshake operation timed out',)))
+error: attemp: 1
+pop proxy: 165.227.182.151:8888:0.5826507290039444
+pop proxy: 192.41.71.221:3128:0.5982154250086751
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+saving page to json:page:bubblecap
+done saving.
+scraped: 69
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:0.7001380020083161
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 138
+has_next_page: True
+related_burst: False
+pop proxy: 13.82.16.76:3128:0.7591538269916782
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFEWldsUnZRSFpza0hoeWpWRU04VDEtRnp0dlZZaTZDWDA5R2tXRHJ4eWFkbHlnMENROUtsd0tBcy1JNVVIZEFNTVF1NXpPSmtFRzFNMFc5Q2FkYmNpRA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 1
+pop proxy: 142.93.59.216:8080:0.8942732009891188
+pop proxy: 68.183.17.112:8080:0.9379104580002604
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFEWldsUnZRSFpza0hoeWpWRU04VDEtRnp0dlZZaTZDWDA5R2tXRHJ4eWFkbHlnMENROUtsd0tBcy1JNVVIZEFNTVF1NXpPSmtFRzFNMFc5Q2FkYmNpRA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3a2710>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 2
+pop proxy: 45.76.235.121:8000:0.9486374920088565
+pop proxy: 38.91.100.122:3128:0.9522477020072984
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFEWldsUnZRSFpza0hoeWpWRU04VDEtRnp0dlZZaTZDWDA5R2tXRHJ4eWFkbHlnMENROUtsd0tBcy1JNVVIZEFNTVF1NXpPSmtFRzFNMFc5Q2FkYmNpRA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 3
+pop proxy: 199.195.248.24:8080:1.0079227020032704
+pop proxy: 134.122.17.137:8080:1.0101145309890853
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFEWldsUnZRSFpza0hoeWpWRU04VDEtRnp0dlZZaTZDWDA5R2tXRHJ4eWFkbHlnMENROUtsd0tBcy1JNVVIZEFNTVF1NXpPSmtFRzFNMFc5Q2FkYmNpRA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db31f438>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 4
+pop proxy: 198.98.55.168:8080:1.0230589709972264
+pop proxy: 70.169.129.246:48678:1.0533065920026274
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFEWldsUnZRSFpza0hoeWpWRU04VDEtRnp0dlZZaTZDWDA5R2tXRHJ4eWFkbHlnMENROUtsd0tBcy1JNVVIZEFNTVF1NXpPSmtFRzFNMFc5Q2FkYmNpRA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db31fe10>, 'Connection to 70.169.129.246 timed out. (connect timeout=3)'))
+error: attemp: 5
+pop proxy: 173.208.198.218:3128:1.142339041995001
+pop proxy: 51.158.123.250:8811:1.2819855790003203
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 208
+has_next_page: True
+related_burst: False
+pop proxy: 68.183.29.15:8080:1.3009211889875587
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBdmRXcm10QlViXzU1QzBuOGxRRGcxb2pFS05zMklCcGFqVk1sSlNqMDVXdnZUZ05FTTU4bVdrNFVPN1FQRUxMNVBuUlJybEdDSXBOMzJ4Z3REa3RfRQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3a22b0>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 1
+pop proxy: 68.15.158.182:48678:1.341163859993685
+pop proxy: 51.158.107.202:8811:1.3896778819907922
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 278
+has_next_page: True
+related_burst: False
+pop proxy: 205.185.127.8:8080:1.4156469739973545
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFEUlYxWENDMGl1QjZteXBRdS1JTV95ek9HUHZUcEpWWmxCc0UxNUhvb2tNSzVUX2ZSeEhzLW5Jdk4wYVlXNTRvaGF0N2ZpS1dwYi15TXl1NHl5Nk94TQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3b14a8>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 1
+pop proxy: 51.91.212.159:3128:1.4287980230001267
+pop proxy: 54.38.79.183:3128:1.4395458630024223
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 345
+has_next_page: True
+related_burst: False
+pop proxy: 129.146.191.68:3128:1.4460448669997277
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCTjN2dERrMS1CYXBlMTRIekVieTlOSWlnazZqeV9SeWgtQmVTeEljNHUtZV94UEZsVFZtZjJQbW52cjFGSkIxeUJkc0xicUZKMUIzM09KUm1JV0JzeQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 1
+pop proxy: 51.158.78.179:8811:1.453899687010562
+pop proxy: 51.158.68.26:8811:1.523100639009499
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCTjN2dERrMS1CYXBlMTRIekVieTlOSWlnazZqeV9SeWgtQmVTeEljNHUtZV94UEZsVFZtZjJQbW52cjFGSkIxeUJkc0xicUZKMUIzM09KUm1JV0JzeQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3260f0>, 'Connection to 51.158.68.26 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 92.249.184.72:8080:1.533114890989964
+pop proxy: 163.172.180.18:8811:1.534623093000846
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCTjN2dERrMS1CYXBlMTRIekVieTlOSWlnazZqeV9SeWgtQmVTeEljNHUtZV94UEZsVFZtZjJQbW52cjFGSkIxeUJkc0xicUZKMUIzM09KUm1JV0JzeQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 3
+pop proxy: 198.98.58.178:8080:1.5480275540030561
+pop proxy: 198.98.50.164:8080:1.5726062320027268
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCTjN2dERrMS1CYXBlMTRIekVieTlOSWlnazZqeV9SeWgtQmVTeEljNHUtZV94UEZsVFZtZjJQbW52cjFGSkIxeUJkc0xicUZKMUIzM09KUm1JV0JzeQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 4
+pop proxy: 51.158.172.165:8811:1.585412827989785
+pop proxy: 51.158.119.88:8811:1.610608211994986
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 412
+has_next_page: True
+related_burst: False
+pop proxy: 163.172.136.226:8811:1.6166962269926444
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFELUJLQS10ZVQ0WXZ0eFN5UTUtZlFoM2kydjNLVzdnLXA2NGRTbmdfOTJQcnMwYWFZRlo3R0ppRXNJWjF0bXNrUGdBRVduSGdUU2VSMmVsSk9QRDM0NQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 1
+pop proxy: 163.172.146.119:8811:1.6175883269897895
+pop proxy: 140.238.15.222:3128:1.646704660000978
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFELUJLQS10ZVQ0WXZ0eFN5UTUtZlFoM2kydjNLVzdnLXA2NGRTbmdfOTJQcnMwYWFZRlo3R0ppRXNJWjF0bXNrUGdBRVduSGdUU2VSMmVsSk9QRDM0NQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db326c18>, 'Connection to 140.238.15.222 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 63.249.67.70:53281:1.6474177930067526
+pop proxy: 50.233.42.98:51696:1.656289973994717
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFELUJLQS10ZVQ0WXZ0eFN5UTUtZlFoM2kydjNLVzdnLXA2NGRTbmdfOTJQcnMwYWFZRlo3R0ppRXNJWjF0bXNrUGdBRVduSGdUU2VSMmVsSk9QRDM0NQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3b64a8>, 'Connection to 50.233.42.98 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 132.145.89.166:3128:1.667850173995248
+pop proxy: 94.130.179.24:8021:1.6733269230026053
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFELUJLQS10ZVQ0WXZ0eFN5UTUtZlFoM2kydjNLVzdnLXA2NGRTbmdfOTJQcnMwYWFZRlo3R0ppRXNJWjF0bXNrUGdBRVduSGdUU2VSMmVsSk9QRDM0NQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 503 Too many open connections',)))
+error: attemp: 4
+pop proxy: 176.221.73.25:3128:1.715383076996659
+pop proxy: 165.22.36.75:8888:1.72112349300005
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFELUJLQS10ZVQ0WXZ0eFN5UTUtZlFoM2kydjNLVzdnLXA2NGRTbmdfOTJQcnMwYWFZRlo3R0ppRXNJWjF0bXNrUGdBRVduSGdUU2VSMmVsSk9QRDM0NQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('_ssl.c:835: The handshake operation timed out',)))
+error: attemp: 5
+pop proxy: 198.98.54.241:8080:1.73033885199402
+pop proxy: 165.16.58.1:8080:1.7362165460071992
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFELUJLQS10ZVQ0WXZ0eFN5UTUtZlFoM2kydjNLVzdnLXA2NGRTbmdfOTJQcnMwYWFZRlo3R0ppRXNJWjF0bXNrUGdBRVduSGdUU2VSMmVsSk9QRDM0NQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 6
+pop proxy: 46.235.53.26:3128:1.7484073289961088
+pop proxy: 182.253.233.44:8080:1.7561242219962878
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 482
+has_next_page: True
+related_burst: False
+pop proxy: 205.185.115.100:8080:1.7880368510086555
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBSzFBYzZQR1M2SmpXZWZMT1JBVEhSbGs5MjV0akU3eDF0SVgzb3g0R2Z4SXVqWFM5YWxaT3R2UjNqSVU4eXBENi0yZGlwWFZYX09TLW5lMXB1aU1kYg%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db2cbc88>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 1
+pop proxy: 41.65.89.59:8080:1.8034053119918099
+pop proxy: 181.118.167.104:80:1.8075987780030118
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 552
+has_next_page: True
+related_burst: False
+pop proxy: 70.165.64.210:48678:1.8092025759979151
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBY041Zkt1ZDhVWnUyTDMwZFdhUG9Bbzg2YzU2SzBYaHVQYi1yWUhJaF8wbmxVc1E5REpsVUg4aEVBZmRXOWdISUlzUXBoSUw2WGk4TzVaZ3RXTHBqdg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db326dd8>, 'Connection to 70.165.64.210 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 54.202.191.84:3128:1.875176139001269
+pop proxy: 128.199.193.37:44344:1.9104420530056814
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBY041Zkt1ZDhVWnUyTDMwZFdhUG9Bbzg2YzU2SzBYaHVQYi1yWUhJaF8wbmxVc1E5REpsVUg4aEVBZmRXOWdISUlzUXBoSUw2WGk4TzVaZ3RXTHBqdg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3bf470>, 'Connection to 128.199.193.37 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 166.150.32.182:56074:1.9131636319943937
+pop proxy: 163.172.190.160:8811:1.9318312990071718
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Read timed out. (read timeout=3)
+error: attemp: 3
+pop proxy: 165.22.98.224:44344:1.9836367669922765
+pop proxy: 104.245.69.17:3128:1.9899897670111386
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBY041Zkt1ZDhVWnUyTDMwZFdhUG9Bbzg2YzU2SzBYaHVQYi1yWUhJaF8wbmxVc1E5REpsVUg4aEVBZmRXOWdISUlzUXBoSUw2WGk4TzVaZ3RXTHBqdg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3a2780>, 'Connection to 104.245.69.17 timed out. (connect timeout=3)'))
+error: attemp: 4
+pop proxy: 195.9.162.186:8080:2.0402680490078637
+pop proxy: 128.199.251.160:44344:2.06477879700833
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 620
+has_next_page: True
+related_burst: False
+pop proxy: 54.38.79.183:3128:1.3281165249936748
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 690
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.3482766100059962
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 760
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.9438637370039942
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 830
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:2.040277727006469
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 900
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.527313310012687
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 971
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.4627913209988037
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1040
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.6288954920019023
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1110
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.7533582350006327
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1180
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.4582576620014152
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1244
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.3934963469946524
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1316
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.518323848998989
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1385
+has_next_page: True
+related_burst: False
+pop proxy: 140.82.60.35:3128:1.827768848001142
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1451
+has_next_page: True
+related_burst: False
+pop proxy: 58.8.143.129:8080:2.068906701999367
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCVTVtUTk2Z3FHWUJXWnpwM19lcHFRZnBRSUZ3RWZaZ3Z4ekpPM0FDbGdnUmJSU1lkMFdZSzdrcTBIVERaaFhUaG5oZE14Q3Z0TUs1eDd3cld5Z3U3RA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db351898>, 'Connection to 58.8.143.129 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 124.121.104.78:8080:2.0868820540054003
+pop proxy: 50.233.228.147:8080:2.0877457469905494
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCVTVtUTk2Z3FHWUJXWnpwM19lcHFRZnBRSUZ3RWZaZ3Z4ekpPM0FDbGdnUmJSU1lkMFdZSzdrcTBIVERaaFhUaG5oZE14Q3Z0TUs1eDd3cld5Z3U3RA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db355e10>, 'Connection to 50.233.228.147 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 140.82.60.35:3128:2.09088116500061
+pop proxy: 98.190.250.150:48678:2.107578935989295
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCVTVtUTk2Z3FHWUJXWnpwM19lcHFRZnBRSUZ3RWZaZ3Z4ekpPM0FDbGdnUmJSU1lkMFdZSzdrcTBIVERaaFhUaG5oZE14Q3Z0TUs1eDd3cld5Z3U3RA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db600cc0>, 'Connection to 98.190.250.150 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 108.61.186.207:8080:2.1165243739960715
+pop proxy: 180.183.46.20:8080:2.138184788011131
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1519
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.111.242:8811:2.1569068679964403
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3518d0>, 'Connection to 51.158.111.242 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 181.48.54.202:3128:2.1575378690031357
+pop proxy: 128.199.191.84:3128:2.1892359360062983
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3ba278>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 2
+pop proxy: 14.207.123.63:8080:2.2323130290023983
+pop proxy: 14.207.25.224:8080:2.2519418470037635
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3bfc88>, 'Connection to 14.207.25.224 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 41.33.179.195:8080:2.253162398992572
+pop proxy: 217.175.35.72:3128:2.2614666019944707
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db2cf7f0>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 4
+pop proxy: 192.41.71.221:3128:2.282272008000291
+pop proxy: 49.156.42.188:8080:2.2830834449996473
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db37e048>, 'Connection to 49.156.42.188 timed out. (connect timeout=3)'))
+error: attemp: 5
+pop proxy: 104.244.75.26:8080:2.29082030900463
+pop proxy: 180.183.96.138:8080:2.3121773780003423
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3aecc0>, 'Connection to 180.183.96.138 timed out. (connect timeout=3)'))
+error: attemp: 6
+pop proxy: 79.106.97.66:8080:2.3249326219956856
+pop proxy: 14.207.27.91:8080:2.3531773400027305
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db37eef0>, 'Connection to 14.207.27.91 timed out. (connect timeout=3)'))
+error: attemp: 7
+pop proxy: 34.219.92.74:3128:2.3570709000050556
+pop proxy: 73.239.197.175:8080:2.3647629899933236
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db2d3780>, 'Connection to 73.239.197.175 timed out. (connect timeout=3)'))
+error: attemp: 8
+pop proxy: 134.236.161.198:8080:2.379609112002072
+pop proxy: 188.165.141.114:3129:2.404110231989762
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBRm1iQnl2V29oekVTM05VRUJaUEZSN2wwQ3lVMFp3TG56eVBQZnhwckFydktrSTVZQy10VWxfc0Rwczl5Zk91RGxPcmE2MGJwLWNjck9rOWMtZjljYQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 9
+pop proxy: 51.158.68.68:8811:2.462547043003724
+pop proxy: 36.90.183.152:8080:2.527895986000658
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1589
+has_next_page: True
+related_burst: False
+pop proxy: 78.157.40.152:8080:2.5321692809957312
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCbk9oQThtS25aUHlab1NBWGdXbExwdFpDWTZsOHB0TWVzMXRaZ2RYdHlJWU1ITk0yYTA5a3pGejJBTnRkdFktaUxHaGRfVDQ3ZkVEV05kZ3otMDdJSQ%3D%3D (Caused by ProxyError('Cannot connect to proxy.', OSError('Tunnel connection failed: 503 Service Unavailable',)))
+error: attemp: 1
+pop proxy: 103.11.107.48:8080:2.5329849000117974
+pop proxy: 95.141.36.112:8686:2.5400616800034186
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCbk9oQThtS25aUHlab1NBWGdXbExwdFpDWTZsOHB0TWVzMXRaZ2RYdHlJWU1ITk0yYTA5a3pGejJBTnRkdFktaUxHaGRfVDQ3ZkVEV05kZ3otMDdJSQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db37ed30>, 'Connection to 95.141.36.112 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 51.158.180.150:8811:2.546362728011445
+pop proxy: 103.233.153.126:8888:2.560121091999463
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1659
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.99.51:8811:2.561487856990425
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFEMnd6S1M3cGVGMU1jQjNBZDZGMFVJZVRNNmtLMnJjNWQwR1ZMVXFBYXIySDBvbEgtS3owanZDLS12RmJiWEJOMUpEcWJnN3VBVGNDN05KRDVnZWFleg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db299550>, 'Connection to 51.158.99.51 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 39.109.123.188:3128:2.591142272009165
+pop proxy: 51.255.103.170:3129:2.6051264029956656
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1730
+has_next_page: True
+related_burst: False
+pop proxy: 205.185.116.235:8080:2.60549824500049
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBTHNqVFBEM1pKYVpia0oydEsxandLTEx6WlRhWWh5YWo2UGRwbGdFVTNYR3g5RC1UWkZnRVVzVFo4NDJCel9tRW1TZ1RqN3JVZDZqTzJqeGJUUlcxbA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db2a7a20>, 'Connection to 205.185.116.235 timed out. (connect timeout=3)'))instaloadercontext
+lib_GET_ANONYMOUS_SESSION
+lib: default_http_header
+CONTEXT INIT
+pop proxy: 169.48.152.174:3128:0.5741507510101655
+FUNC: default_user_agent
+lib_GET_ANONYMOUS_SESSION
+lib: default_http_header
+CLASS INIT: InstaloaderTommy Inint
+Archiver Ready! Waiting for a hashtag from redis...
+start: bubblecap
+
+error: attemp: 1
+pop proxy: 14.207.40.54:8080:2.643072658989695
+pop proxy: 51.158.165.18:8811:2.6435294050024822
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 1801
+trigger archive background scraper
+scrape_more: 1
+Archiver Ready! Waiting for a hashtag from redis...
+start: bubblecap
+archive scraper bubblecap
+pop proxy: 102.165.69.77:8080:2.6435363750060787
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFCbDVfNTI1T2lNczJJUXgxTVBzcTE0RGhTWVdtSTVfODJoVGxCWGI3QzZqRGt1OVpGaWc1d0YwOEstNy15Q1N4SC1vU2Fic2FJWkI1QzZFUUd1cDhqdQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db5fedd8>, 'Connection to 102.165.69.77 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 113.160.248.254:3128:2.6475360659969738
+pop proxy: 103.52.144.49:8080:2.662087774995598
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85551.846446896
+timing: 9.18103159799648
+posts: 70
+post /sec 7.6244155411986245
+scraped total: 70
+has_next_page: True
+related_burst: False
+pop proxy: 36.69.2.160:8080:2.663576794991968
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85561.029127783
+timing: 3.542660450999392
+posts: 72
+post /sec 20.323708974053282
+scraped total: 142
+has_next_page: True
+related_burst: False
+pop proxy: 80.187.140.26:8080:2.69064392799919
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFDVG9PeWV0Y2RMX2pvLXFGcWYtc3VoX2I5di1fY3lFRUZFcGlzQnNpZGh0RXJfVWtFYkt0eVRkRk1YZF9faDY1RkU1LWRhMUEyRWp1T1N6QVV3TTRNWA%3D%3D (Caused by SSLError(SSLError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:852)'),))
+error: attemp: 1
+pop proxy: 94.130.179.24:8013:2.7044620610104175
+pop proxy: 189.41.66.152:8080:2.706941160999122
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85564.573079524
+timing: 4.109658177010715
+posts: 71
+post /sec 17.276376024938408
+scraped total: 213
+has_next_page: True
+related_burst: False
+pop proxy: 187.188.175.251:42305:2.747019364993321
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBQ1ZkYkhDSENDRFU2TGZ4eUZVb1VSNy1SZlhUamdPcEtRNTd4Q3B5U1I3REVYOG51R1F6b3VXb2RsRjY3OXowdC1Ebmwway1kTUw3bmx4ZkpGS21PQw%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3a9518>, 'Connection to 187.188.175.251 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 128.199.200.236:44344:2.762443924002582
+pop proxy: 178.62.246.180:3128:2.7630168629984837
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85568.683085967
+timing: 7.416660877002869
+posts: 70
+post /sec 9.438209614929509
+scraped total: 283
+has_next_page: True
+related_burst: False
+pop proxy: 138.197.32.120:3128:2.766262249991996
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFENUhaZ3ZrWVJFSWNuWHJ0U3V5OVpVd2VqdkxSWTIxVHRacjlWb3hKbjBuVE5xTzRtVFdjOGJGcHE4emF0YU1VVGN3MVhBd1ZrQmQwTTBJdVF1LUktTg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3a1da0>, 'Connection to 138.197.32.120 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 46.174.235.87:8080:2.783915568012162
+pop proxy: 51.158.180.179:8811:2.7963683220004896
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85576.100470881
+timing: 7.015806746989256
+posts: 71
+post /sec 10.12000509142712
+scraped total: 354
+SLEEP
+not_exist: 1
+push to tagsin
+Archiver Ready! Waiting for a hashtag from redis...
+start: bubblecap
+archive scraper bubblecap
+pop proxy: 84.119.9.192:80:2.8081449210003484
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBR1lvNVpYU3BWS3plM2NDeUdVVWRtbkNuMVZUU0RYNHdST09XRXAtYmhiMS1JOTNya0JMUTFRUzVVdFV3U0J1RXVPRlNYcFRhX1hkSE9wdXhWQ0FDMA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db5fedd8>, 'Connection to 84.119.9.192 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 68.15.31.118:48678:2.818358756005182
+pop proxy: 173.46.67.172:58517:2.8400120989972493
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBR1lvNVpYU3BWS3plM2NDeUdVVWRtbkNuMVZUU0RYNHdST09XRXAtYmhiMS1JOTNya0JMUTFRUzVVdFV3U0J1RXVPRlNYcFRhX1hkSE9wdXhWQ0FDMA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 2
+pop proxy: 88.255.101.237:8080:2.840541706988006
+pop proxy: 83.175.166.234:8080:2.855609813996125
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBR1lvNVpYU3BWS3plM2NDeUdVVWRtbkNuMVZUU0RYNHdST09XRXAtYmhiMS1JOTNya0JMUTFRUzVVdFV3U0J1RXVPRlNYcFRhX1hkSE9wdXhWQ0FDMA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db38edd8>, 'Connection to 83.175.166.234 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 110.44.128.200:3128:2.8634196019993396
+pop proxy: 51.158.107.202:8811:2.88112014500075
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85584.127602734
+timing: 12.890697399998317
+posts: 69
+post /sec 5.352697209385196
+scraped total: 69
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.107.202:8811:2.7458266690082382
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85597.019594431
+timing: 2.050408609007718
+posts: 70
+post /sec 34.1395367208666
+scraped total: 139
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.107.202:8811:2.0136410720006097
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85599.070487671
+timing: 2.0093962930113776
+posts: 66
+post /sec 32.84568615436691
+scraped total: 205
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.107.202:8811:1.986965558011434
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85601.083901707
+timing: 1.9500043250009185
+posts: 68
+post /sec 34.871717528097264
+scraped total: 273
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.107.202:8811:1.916757372993743
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85603.034190385
+timing: 1.8375891159957973
+posts: 69
+post /sec 37.54919932827781
+scraped total: 342
+SLEEP
+not_exist: 1
+push to tagsin
+archive scraper bubblecap
+pop proxy: 51.158.107.202:8811:1.811974383002962
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFDZ3N5ZzJTQzFLR2pNYkxFa3ZTNmhtNFAwMlhSbkRRU1RtNDZqT3dkVFo3NnRnMUdQRmpLVFk3aHFaTWMwMk82LXgwRDJySXlCU24xZ2Zxc2UzM19JbA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 1
+pop proxy: 103.209.131.3:8080:2.8846994529885706
+pop proxy: 24.172.34.114:49116:2.8935309239896014
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFDZ3N5ZzJTQzFLR2pNYkxFa3ZTNmhtNFAwMlhSbkRRU1RtNDZqT3dkVFo3NnRnMUdQRmpLVFk3aHFaTWMwMk82LXgwRDJySXlCU24xZ2Zxc2UzM19JbA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db38f5c0>, 'Connection to 24.172.34.114 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 12.218.209.130:53281:2.8994351879955502
+pop proxy: 200.111.182.6:443:2.9130456580023747
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85605.885111189
+timing: 7.43496411301021
+posts: 69
+post /sec 9.280475191434894
+scraped total: 69
+has_next_page: True
+related_burst: False
+pop proxy: 187.44.1.172:8080:2.9210464439966017
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFBblMwNDBVUDFQTmlxelVVZXFZX0R0ZlJvbDA5Rk9DNXRjSzFCd1JONE15QUVBLXRhUDduVjlxMHRFaHBGek9RU1dfb08tbHAxclVQU1pGMXdHWXJuOQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3b0b70>, 'Connection to 187.44.1.172 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 103.78.183.175:8080:2.9306153579964302
+pop proxy: 51.158.119.88:8811:2.9634494399942923
+get_json 
+exists: sketch:all:bubblecap
+post_exists: 0
+ARCHIVE_RUN
+start: 85613.321612956
+timing: 7.244879261997994
+posts: 70
+post /sec 9.661996766071073
+scraped total: 139
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.165.18:8811:3.0480975460086484
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 1
+pop proxy: 63.224.174.18:8080:3.0553457550122403
+pop proxy: 37.59.61.18:8080:3.0773418949975166
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 2
+pop proxy: 180.183.45.220:8080:3.081412953004474
+pop proxy: 96.87.184.101:43705:3.081644576988765
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3ac400>, 'Connection to 96.87.184.101 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 14.207.204.164:8080:3.0832304080104223
+pop proxy: 190.217.7.77:999:3.115313299000263
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db316588>, 'Connection to 190.217.7.77 timed out. (connect timeout=3)'))
+error: attemp: 4
+pop proxy: 203.77.229.124:8080:3.1272160520020407
+pop proxy: 192.119.203.170:48678:3.1594869469990954
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db316cc0>, 'Connection to 192.119.203.170 timed out. (connect timeout=3)'))
+error: attemp: 5
+pop proxy: 166.98.140.50:8080:3.1748729899991304
+pop proxy: 192.119.203.124:48678:3.1765498390013818
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3b74e0>, 'Connection to 192.119.203.124 timed out. (connect timeout=3)'))
+error: attemp: 6
+pop proxy: 139.194.42.92:7788:3.1945753570034867
+pop proxy: 64.56.216.177:8080:3.2132574999995995
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3b7cc0>, 'Connection to 64.56.216.177 timed out. (connect timeout=3)'))
+error: attemp: 7
+pop proxy: 36.66.140.15:8080:3.2179905389930354
+pop proxy: 37.120.161.249:3128:3.229464812000515
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ProxyError('Cannot connect to proxy.', NewConnectionError('<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3bf390>: Failed to establish a new connection: [Errno 111] Connection refused',)))
+error: attemp: 8
+pop proxy: 94.189.132.47:8080:3.2604370979970554
+pop proxy: 5.152.206.167:8080:3.2635711829934735
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3bfb70>, 'Connection to 5.152.206.167 timed out. (connect timeout=3)'))
+error: attemp: 9
+pop proxy: 140.82.60.35:3128:3.281132467003772
+pop proxy: 213.98.67.40:41005:3.304801897989819
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/bubblecap/?__a=1&max_id=QVFERVFEQkprZUFZTzBNcmlzNWZfZ2lubENzMENjOVk5RGU0eS05amx1THhBQW1Wb3VXRTdfRGtsVGNZaEdzeTVXMVpHNVN4M095dlBXcGZyUU9PTFNnRg%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3c6390>, 'Connection to 213.98.67.40 timed out. (connect timeout=3)'))
+Ready! Waiting for a hashtag from redis...
+SCRAPE REQ: adidas
+Ready! Waiting for a hashtag from redis...
+SCRAPE REQ: bubblecap
+FOUND SCRAPED_RECENT KEY
+ABORTING
+Ready! Waiting for a hashtag from redis...
+SCRAPE REQ: eternalglassauctions
+pop proxy: 110.77.236.232:8080:3.397668246005196
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/eternalglassauctions/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db600b00>, 'Connection to 110.77.236.232 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 118.99.103.231:8080:3.418087939004181
+pop proxy: 189.41.66.152:8080:3.4244113570021
+get_json 
+exists: sketch:all:eternalglassauctions
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+saving page to json:page:eternalglassauctions
+done saving.
+scraped: 72
+has_next_page: True
+related_burst: False
+pop proxy: 200.60.13.122:999:3.4787378550099675
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/eternalglassauctions/?__a=1&max_id=QVFCWnVydEtuWEtVNVVEdDhwZjdsdS1oaTdMMmJTVExuQjNDU1dyaVFsTk9sblV4LVAtQ3FPc1dRNkxpNkxyRnIxM2c5TkpQbm1Pdzg1dlluRmNoOWNwRQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3aeb70>, 'Connection to 200.60.13.122 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 190.242.98.61:8083:3.4857431999989785
+pop proxy: 190.85.147.122:8080:3.4919114200019976
+get_json 
+exists: sketch:all:eternalglassauctions
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 125
+has_next_page: False
+related_burst: False
+Ready! Waiting for a hashtag from redis...
+SCRAPE REQ: teprs
+pop proxy: 125.25.80.39:42790:3.321164549997775
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db600b38>, 'Connection to 125.25.80.39 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 110.232.252.187:8080:3.337988138999208
+pop proxy: 125.25.97.169:8080:3.344622452001204
+get_json 
+exists: sketch:all:adidas
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+saving page to json:page:adidas
+done saving.
+scraped: 71
+has_next_page: True
+related_burst: False
+pop proxy: 140.238.16.90:3128:3.3643592940061353
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFCY0FqaVE0S2VtaXVSZHBjSlpIYmNQMVJUdHVHU3NrYUg3WFlsYVR5VzNFNnAwYVJqaWNySHdpOC1FVUZ4Qm9zbDJacXF6dE9Hbi16RlpMV3hfRmlRcQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3afd30>, 'Connection to 140.238.16.90 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 181.48.161.194:8080:3.3849649940093514
+pop proxy: 176.113.225.69:8080:3.394630610011518
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFCY0FqaVE0S2VtaXVSZHBjSlpIYmNQMVJUdHVHU3NrYUg3WFlsYVR5VzNFNnAwYVJqaWNySHdpOC1FVUZ4Qm9zbDJacXF6dE9Hbi16RlpMV3hfRmlRcQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3a2438>, 'Connection to 176.113.225.69 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 46.174.238.100:8080:3.4096094470005482
+pop proxy: 190.96.214.59:8080:3.411929395995685
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFCY0FqaVE0S2VtaXVSZHBjSlpIYmNQMVJUdHVHU3NrYUg3WFlsYVR5VzNFNnAwYVJqaWNySHdpOC1FVUZ4Qm9zbDJacXF6dE9Hbi16RlpMV3hfRmlRcQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3a2940>, 'Connection to 190.96.214.59 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 80.250.20.190:8080:3.437688356003491
+pop proxy: 103.14.234.22:8080:3.4527664950001054
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFCY0FqaVE0S2VtaXVSZHBjSlpIYmNQMVJUdHVHU3NrYUg3WFlsYVR5VzNFNnAwYVJqaWNySHdpOC1FVUZ4Qm9zbDJacXF6dE9Hbi16RlpMV3hfRmlRcQ%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3b18d0>, 'Connection to 103.14.234.22 timed out. (connect timeout=3)'))
+error: attemp: 4
+pop proxy: 125.25.97.169:8080:3.4547156110056676
+pop proxy: 182.71.102.215:3128:3.4621104010002455
+get_json 
+exists: sketch:all:adidas
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 142
+has_next_page: True
+related_burst: False
+pop proxy: 103.226.49.114:8080:3.5036557160055963
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3b1b70>, 'Connection to 103.226.49.114 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 36.69.2.160:8080:3.5056435399892507
+pop proxy: 34.222.213.129:3128:3.5146036600053776
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 2
+pop proxy: 201.219.213.198:999:3.5246851690026233
+pop proxy: 118.99.94.97:8080:3.525129071000265
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db348fd0>, 'Connection to 118.99.94.97 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 190.103.28.244:999:3.5463399449945427
+pop proxy: 51.158.68.133:8811:3.5470556229993235
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 4
+pop proxy: 181.118.167.104:80:3.5580844009964494
+pop proxy: 195.214.222.75:8080:3.5596304869977757
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db344400>, 'Connection to 195.214.222.75 timed out. (connect timeout=3)'))
+error: attemp: 5
+pop proxy: 200.111.182.6:443:3.56864598300308
+pop proxy: 18.237.64.41:3128:3.57888656599971
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 6
+pop proxy: 181.49.131.82:8080:3.5978422820044216
+pop proxy: 202.5.57.2:8080:3.644352166011231
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 7
+pop proxy: 190.248.68.18:8080:3.6596436749969143
+pop proxy: 188.165.141.114:3129:3.675468433997594
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 8
+pop proxy: 14.177.235.17:8080:3.685952145999181
+pop proxy: 45.64.99.26:8080:3.6881424210005207
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db344b70>, 'Connection to 45.64.99.26 timed out. (connect timeout=3)'))
+error: attemp: 9
+pop proxy: 185.238.239.32:8090:3.717511825991096
+pop proxy: 187.59.201.213:8080:3.7193725120159797
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/adidas/?__a=1&max_id=QVFDRUdEdkROQmR0enlhUjdsWTVtcEYtM2VtcFd6dUkzLXdqT1M4NmJUdXh5SGR5akNYb29FR1JUMXAweGM5NDNxSnd0OFRXcFZ3QXEyVUd0Uzd0aC0xTA%3D%3D (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db2ba4a8>, 'Connection to 187.59.201.213 timed out. (connect timeout=3)'))
+pop proxy: 119.42.116.133:8080:3.6813403770065634
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db600518>, 'Connection to 119.42.116.133 timed out. (connect timeout=3)'))
+error: attemp: 1
+pop proxy: 78.30.192.84:32506:3.7172880950092804
+pop proxy: 171.100.102.154:30090:3.71735446099774
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db61e2b0>, 'Connection to 171.100.102.154 timed out. (connect timeout=3)'))
+error: attemp: 2
+pop proxy: 200.33.143.75:49346:3.7198156909726094
+pop proxy: 45.127.134.195:8080:3.721789864008315
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db61e5f8>, 'Connection to 45.127.134.195 timed out. (connect timeout=3)'))
+error: attemp: 3
+pop proxy: 194.135.246.122:3128:3.7228268230101094
+pop proxy: 134.249.117.3:8080:3.724254775996087
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3972b0>, 'Connection to 134.249.117.3 timed out. (connect timeout=3)'))
+error: attemp: 4
+pop proxy: 46.174.238.12:8080:3.7298513679997995
+pop proxy: 186.211.106.227:34334:3.7311685089953244
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db3975f8>, 'Connection to 186.211.106.227 timed out. (connect timeout=3)'))
+error: attemp: 5
+pop proxy: 92.249.122.108:61778:3.7316322730039246
+pop proxy: 183.88.220.245:8080:3.7336636499967426
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 6
+pop proxy: 93.188.34.227:8080:3.734313763008686
+pop proxy: 157.245.54.87:8080:3.7366091160220094
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ConnectTimeoutError(<urllib3.connection.VerifiedHTTPSConnection object at 0x7f81db39eba8>, 'Connection to 157.245.54.87 timed out. (connect timeout=3)'))
+error: attemp: 7
+pop proxy: 186.125.218.131:999:3.7383592639816925
+pop proxy: 159.192.141.89:8080:3.740794070996344
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1 (Caused by ProxyError('Cannot connect to proxy.', ConnectionResetError(104, 'Connection reset by peer')))
+error: attemp: 8
+pop proxy: 118.174.220.32:51399:3.7463827620085794
+pop proxy: 180.183.46.20:8080:3.7469030489883153
+get_json 
+sketch NOT Exists sketch:all:teprs
+cms res: True
+INITIAL_SCRAPE
+saving to redis
+saving page to json:page:teprs
+done saving.
+scraped: 64
+has_next_page: True
+related_burst: False
+pop proxy: 187.130.139.197:8080:1.1941991909989156
+get_json 
+EXCEPTION: HTTPSConnectionPool(host='www.instagram.com', port=443): Max retries exceeded with url: /explore/tags/teprs/?__a=1&max_id=QVFDSUlUeDFvWHpQOG91S19iMEFkM01xUS1MQXlhTC1jRGxKVzRZdmowN3hVYkF3RWlSRXczZUQ3Q192ckdKbkpnMDcwSTdjaUtnRDl2YWp1VDVOLTdqNw%3D%3D (Caused by ProxyError('Cannot connect to proxy.', timeout('timed out',)))
+error: attemp: 1
+pop proxy: 138.197.32.120:3128:1.2108554629958235
+pop proxy: 192.41.71.221:3128:1.3887578990106704
+get_json 
+exists: sketch:all:teprs
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 136
+has_next_page: True
+related_burst: False
+pop proxy: 51.158.165.18:8811:1.5926450630067848
+get_json 
+exists: sketch:all:teprs
+post_exists: 0
+INITIAL_SCRAPE
+saving to redis
+scraped: 189
+has_next_page: False
+related_burst: False
