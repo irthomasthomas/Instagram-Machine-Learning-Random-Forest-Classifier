@@ -47,6 +47,12 @@ def getproxies1():
     print("LIST 1: " + str(len(proxylist)))
     
     # LIST 2
+    
+    # LIST 3
+    return proxylist
+
+def getproxies2():
+    proxylist = []
     prsc = json.loads(get("https://raw.githubusercontent.com/sunny9577/proxy-scraper/master/proxies.json").text)
     sourcelist = []
     for i in prsc:
@@ -58,10 +64,9 @@ def getproxies1():
             if ip not in proxylist:
                 proxylist.append(ip)
     print("LIST 2: " + str(len(proxylist)))
-    # LIST 3
     return proxylist
 
-def getproxies2():
+def getproxies3():
     proxylist = []
     for line in get("https://raw.githubusercontent.com/clarketm/proxy-list/master/proxy-list.txt").content.splitlines(True):
         p = line.decode().rstrip().split(" ")[0].split(":")
@@ -73,6 +78,11 @@ def getproxies2():
             continue
     print("LIST 3: " + str(len(proxylist)))
     # LIST 4
+    
+    return proxylist
+
+def getproxies4():
+    proxylist = []
     for line in get("https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks.txt").content.splitlines(True):
         try:
             p = line.decode().rstrip().split(" ")[0].split(":")
@@ -83,7 +93,6 @@ def getproxies2():
             continue
     print("LIST 4: " + str(len(proxylist)))
     return proxylist
-
 
 def test_proxy_list(proxylist):
     goodproxies = []
@@ -102,10 +111,16 @@ def main():
 
         proxylist1 = getproxies1()
         test_proxy_list(proxylist1)
-        sleep(300)
+        sleep(60)
         proxylist2 = getproxies2()
         test_proxy_list(proxylist2)
-        
+        sleep(60)
+        proxylist3 = getproxies3()
+        test_proxy_list(proxylist3)
+        sleep(60)
+        proxylist4 = getproxies4()
+        test_proxy_list(proxylist4)
+        sleep(60)
         endtime = datetime.now()
         print("Time: " +str(endtime - start_time))
         # proxies = asyncio.Queue()
@@ -113,7 +128,7 @@ def main():
         # tasks = asyncio.gather(
         #     broker.find(types=['HTTPS'], limit=10), get_prox(proxies)
         # )    
-        sleep(300)
+        sleep(60)
     
 
 if __name__ == "__main__":

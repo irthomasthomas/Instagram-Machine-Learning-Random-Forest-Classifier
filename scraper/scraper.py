@@ -51,7 +51,7 @@ def scrape(tag, num_to_scrape):
 def main():
     while True:
 
-        num_to_scrape = 1800
+        num_to_scrape = 3800
 
         print('MAIN SCRAPER READY! Waiting for a hashtag from redis...')
         # TODO: SUBSCRIBE AND BARK
@@ -68,9 +68,9 @@ def main():
             continue
         else:
             r.set(f'scraped:recent:{tag}', "True")
+            r.expire(f'scraped:recent:{tag}', 600)
         p = Process(target=scrape, args=(tag, num_to_scrape))
         p.start()
-        r.expire(f'scraped:recent:{tag}', 600)
 
 if __name__ == "__main__":
     main()
