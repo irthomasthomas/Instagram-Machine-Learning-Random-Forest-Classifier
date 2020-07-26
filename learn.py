@@ -7,7 +7,7 @@ import csv
 import re
 import string
 
-from nltk.corpus import stopwords
+# from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.metrics import mean_absolute_error
@@ -15,8 +15,9 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import roc_curve, auc
-import tensorflow as tf
+# import tensorflow as tf
 from stop_words import get_stop_words
+import unidecode
 
 
 def get_num_words_per_sample(sample_texts):
@@ -52,6 +53,10 @@ def pre_proc_text(caption):
         translator = str.maketrans('', '', string.punctuation)
         return text.translate(translator)
 
+    def remove_accents(text):
+        unaccented_string = unidecode.unidecode(text)
+        return unaccented_string
+
     def tokenize(text):
         text = re.split('\W+', text)
         return text
@@ -65,7 +70,7 @@ def pre_proc_text(caption):
     caption, tags = extract_hashtags(caption)
     caption, mentions = extract_mentions(caption)
     caption = remove_punct(caption)
-
+    # caption = remove_accents(caption)
     caption = tokenize(caption)
     caption = remove_stopwords(caption, stop_words)
 
@@ -76,183 +81,182 @@ def pre_proc_text(caption):
     return caption
 
 
-def train_tf_keras(input_file):
-    from multiprocessing import Pool
-    start = time()
+# def train_tf_keras(input_file):
+    #     from multiprocessing import Pool
+    #     start = time()
 
-    df = pd.read_csv(input_file, header=0, usecols=["og_caption", "target"])
-    og_captions = df['og_caption'].values.tolist()
+    #     df = pd.read_csv(input_file, header=0, usecols=["og_caption", "target"])
+    #     og_captions = df['og_caption'].values.tolist()
 
-    captions = []
-    pool = Pool(3)
-    captions = [x for x in pool.map(pre_proc_text, og_captions) if x is not None]
-    df['clean_caption'] = pd.Series(captions)
-    df, y = df.clean_caption, df.target
+    #     captions = []
+    #     pool = Pool(3)
+    #     captions = [x for x in pool.map(pre_proc_text, og_captions) if x is not None]
+    #     df['clean_caption'] = pd.Series(captions)
+    #     df, y = df.clean_caption, df.target
 
-    documents = []
-    for caption in range(0, len(df)):
-        document = str(df[caption])
-        documents.append(document)
+    #     documents = []
+    #     for caption in range(0, len(df)):
+    #         document = str(df[caption])
+    #         documents.append(document)
 
-    # df = np.array(df)
-    # y = np.array(y)
+    #     # df = np.array(df)
+    #     # y = np.array(y)
 
-    from sklearn.model_selection import train_test_split
-    sentences_train, sentences_test, y_train, y_test = train_test_split(
-        df, y, test_size=0.15, random_state=1000)
-    from keras.preprocessing.text import Tokenizer
-    tokenizer = Tokenizer(num_words=5000)
-    tokenizer.fit_on_texts(sentences_train)
-    pickle.dump(tokenizer, open("tokenizer.pickle", "wb"))
-    print("saved tokenizer")
-    X_train = tokenizer.texts_to_sequences(sentences_train)
-    X_test = tokenizer.texts_to_sequences(sentences_test)
-    
-    vocab_size = len(tokenizer.word_index) + 1
-    print(sentences_train[2])
-    print(X_train[2])
-    
-    from keras.preprocessing.sequence import pad_sequences
-    X_train = pad_sequences(
-        X_train, padding="post", maxlen=500)
-    X_test = pad_sequences(X_test, padding="post", maxlen=500)
-    print(X_train[0, :])
-
-    from keras.models import Sequential
-    from keras import layers
-    model = Sequential()
-    print("model = Sequential")
-    model.add(layers.Embedding(
-        input_dim=vocab_size,
-        output_dim=50,
-        input_length=500))
-    print("model layers embedding")
-    model.add(layers.Flatten())
-    model.add(layers.Dense(10, activation="relu"))
-    model.add(layers.Dense(1, activation="sigmoid"))
-    model.compile(
-        optimizer="adam",
-        loss="binary_crossentropy",
-        metrics=["accuracy"])
-    print("model compiled")
-    model.summary()
-    print("summary")
-    history = model.fit(
-        X_train, y_train,
-        epochs=20,
-        verbose=False,
-        validation_data=(X_test, y_test),
-        batch_size=10)
-    print("fitted model")
-    loss, accuracy = model.evaluate(X_train, y_train, verbose=False)
-    print("Training accuracy: {:.4f}".format(accuracy))
-    loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
-    print("Testing Accuracy : {:.4f}".format(accuracy))
-    pickle.dump(model, open("tf_kerasmodel.pickle", "wb"))
-
-    import keras2onnx
-    import onnx
-    onnx_model = keras2onnx.convert_keras(model, model.name)
-
-    temp_model_file = "model.onnx"
-    onnx.save_model(onnx_model, temp_model_file)
-    # sess = onnxruntime.InferenceSession(temp_model_file)
-
-
-    return model
-
-
-def train_tf_rfc(input_file):
-    from multiprocessing import Pool
-    start = time()
-
-    df = pd.read_csv(input_file, header=0, usecols=["og_caption", "target"])
-    # df.columns = ["data", "target"] id	og_caption	mod_caption	target
-    og_captions = df['og_caption'].values.tolist()
-
-    captions = []
-    pool = Pool(3)
-    captions = [x for x in pool.map(pre_proc_text, og_captions) if x is not None]
-    # print(captions)
-    print("num words per sample: ")
-    print(str(get_num_words_per_sample(captions)))
-    df['clean_caption'] = pd.Series(captions)
-    df, y = df.clean_caption, df.target
-    # df, y = df.og_caption, df.target
-
-    documents = []
-    for caption in range(0, len(df)):
-        document = str(df[caption])
-        documents.append(document)
-
-    vectorizer = TfidfVectorizer(
-        max_features=80, stop_words=stopwords)
-    print(str(time() - start))
-
-    X = vectorizer.fit_transform(documents).toarray()
-    print(str(time() - start))
-
-    pickle.dump(vectorizer, open("vectorizer.pickle", "wb"))
-    print(str(time() - start))
-
-    from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=0)
-
-    from keras.models import Sequential
-    from keras import layers
-    input_dim = X_train.shape[1]
-    model = Sequential()
-    model.add(
-        layers.Dense(10, input_dim=input_dim, activation="relu"))
-    model.add(layers.Dense(1, activation='sigmoid'))
-    model.compile(
-        optimizer="adam",
-        loss="binary_crossentropy",
-        metrics=["accuracy"])
-    model.summary()
-
-    history = model.fit(
-        X_train, y_train,
-        epochs=20,
-        verbose=False,
-        validation_data=(X_test, y_test),
-        batch_size=5)
-
-    loss, accuracy = model.evaluate(
-        X_train, y_train, verbose=False)
-    print("Training accuracy: {:.4f}".format(accuracy))
-    loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
-    print("Testing accuracy: {:.4f}".format(accuracy))
-    # from sklearn.ensemble import RandomForestClassifier as rfc
-        # import tflearn
-        # from tflearn.estimators import RandomForestClassifier as rfc
+    #     from sklearn.model_selection import train_test_split
+    #     sentences_train, sentences_test, y_train, y_test = train_test_split(
+    #         df, y, test_size=0.15, random_state=1000)
+    #     from keras.preprocessing.text import Tokenizer
+    #     tokenizer = Tokenizer(num_words=5000)
+    #     tokenizer.fit_on_texts(sentences_train)
+    #     pickle.dump(tokenizer, open("tokenizer.pickle", "wb"))
+    #     print("saved tokenizer")
+    #     X_train = tokenizer.texts_to_sequences(sentences_train)
+    #     X_test = tokenizer.texts_to_sequences(sentences_test)
         
-        # train_results = []
-        # test_results = []
+    #     vocab_size = len(tokenizer.word_index) + 1
+    #     print(sentences_train[2])
+    #     print(X_train[2])
         
-        # m = rfc(
-        #     n_estimators=32, 
-        #     max_nodes=45,
-        #     n_classes=None,
-        #     n_features=None,
-        #     metric=None,
-        #     graph=None,
-        #     global_step=None)
+    #     from keras.preprocessing.sequence import pad_sequences
+    #     X_train = pad_sequences(
+    #         X_train, padding="post", maxlen=500)
+    #     X_test = pad_sequences(X_test, padding="post", maxlen=500)
+    #     print(X_train[0, :])
 
-        # m.fit(X_train, y_train)
-        # print(m.evaluate(X_train, X_test, tflearn.accuracy_op))
-        # print(m.evaluate(y_train, y_test, tflearn.accuracy_op))
-        # print(m.predict(y_train))
-    
-    # train_pred = m.predict(X_train)
-    # y_pred = m.predict(X_test)
+    #     from keras.models import Sequential
+    #     from keras import layers
+    #     model = Sequential()
+    #     print("model = Sequential")
+    #     model.add(layers.Embedding(
+    #         input_dim=vocab_size,
+    #         output_dim=50,
+    #         input_length=500))
+    #     print("model layers embedding")
+    #     model.add(layers.Flatten())
+    #     model.add(layers.Dense(10, activation="relu"))
+    #     model.add(layers.Dense(1, activation="sigmoid"))
+    #     model.compile(
+    #         optimizer="adam",
+    #         loss="binary_crossentropy",
+    #         metrics=["accuracy"])
+    #     print("model compiled")
+    #     model.summary()
+    #     print("summary")
+    #     history = model.fit(
+    #         X_train, y_train,
+    #         epochs=20,
+    #         verbose=False,
+    #         validation_data=(X_test, y_test),
+    #         batch_size=10)
+    #     print("fitted model")
+    #     loss, accuracy = model.evaluate(X_train, y_train, verbose=False)
+    #     print("Training accuracy: {:.4f}".format(accuracy))
+    #     loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
+    #     print("Testing Accuracy : {:.4f}".format(accuracy))
+    #     pickle.dump(model, open("tf_kerasmodel.pickle", "wb"))
 
-    print(str(time() - start))
-    
-    
-    with open("tf_rf_classifier", "wb") as picklefile:
-        pickle.dump(classifier, picklefile)
-    return classifier
+    #     import keras2onnx
+    #     import onnx
+    #     onnx_model = keras2onnx.convert_keras(model, model.name)
+
+    #     temp_model_file = "model.onnx"
+    #     onnx.save_model(onnx_model, temp_model_file)
+    #     # sess = onnxruntime.InferenceSession(temp_model_file)
+
+
+    #     return model
+
+
+# def train_tf_rfc(input_file):
+    #     from multiprocessing import Pool
+    #     start = time()
+
+    #     df = pd.read_csv(input_file, header=0, usecols=["og_caption", "target"])
+    #     # df.columns = ["data", "target"] id	og_caption	mod_caption	target
+    #     og_captions = df['og_caption'].values.tolist()
+
+    #     captions = []
+    #     pool = Pool(3)
+    #     captions = [x for x in pool.map(pre_proc_text, og_captions) if x is not None]
+    #     print("num words per sample: ")
+    #     print(str(get_num_words_per_sample(captions)))
+    #     df['clean_caption'] = pd.Series(captions)
+    #     df, y = df.clean_caption, df.target
+    #     # df, y = df.og_caption, df.target
+
+    #     documents = []
+    #     for caption in range(0, len(df)):
+    #         document = str(df[caption])
+    #         documents.append(document)
+
+    #     vectorizer = TfidfVectorizer(
+    #         max_features=80, stop_words=stopwords)
+    #     print(str(time() - start))
+
+    #     X = vectorizer.fit_transform(documents).toarray()
+    #     print(str(time() - start))
+
+    #     pickle.dump(vectorizer, open("vectorizer.pickle", "wb"))
+    #     print(str(time() - start))
+
+    #     from sklearn.model_selection import train_test_split
+    #     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=0)
+
+    #     from keras.models import Sequential
+    #     from keras import layers
+    #     input_dim = X_train.shape[1]
+    #     model = Sequential()
+    #     model.add(
+    #         layers.Dense(10, input_dim=input_dim, activation="relu"))
+    #     model.add(layers.Dense(1, activation='sigmoid'))
+    #     model.compile(
+    #         optimizer="adam",
+    #         loss="binary_crossentropy",
+    #         metrics=["accuracy"])
+    #     model.summary()
+
+    #     history = model.fit(
+    #         X_train, y_train,
+    #         epochs=20,
+    #         verbose=False,
+    #         validation_data=(X_test, y_test),
+    #         batch_size=5)
+
+    #     loss, accuracy = model.evaluate(
+    #         X_train, y_train, verbose=False)
+    #     print("Training accuracy: {:.4f}".format(accuracy))
+    #     loss, accuracy = model.evaluate(X_test, y_test, verbose=False)
+    #     print("Testing accuracy: {:.4f}".format(accuracy))
+    #     # from sklearn.ensemble import RandomForestClassifier as rfc
+    #         # import tflearn
+    #         # from tflearn.estimators import RandomForestClassifier as rfc
+            
+    #         # train_results = []
+    #         # test_results = []
+            
+    #         # m = rfc(
+    #         #     n_estimators=32, 
+    #         #     max_nodes=45,
+    #         #     n_classes=None,
+    #         #     n_features=None,
+    #         #     metric=None,
+    #         #     graph=None,
+    #         #     global_step=None)
+
+    #         # m.fit(X_train, y_train)
+    #         # print(m.evaluate(X_train, X_test, tflearn.accuracy_op))
+    #         # print(m.evaluate(y_train, y_test, tflearn.accuracy_op))
+    #         # print(m.predict(y_train))
+        
+    #     # train_pred = m.predict(X_train)
+    #     # y_pred = m.predict(X_test)
+
+    #     print(str(time() - start))
+        
+        
+    #     with open("tf_rf_classifier", "wb") as picklefile:
+    #         pickle.dump(classifier, picklefile)
+    #     return classifier
 
 
 def train_sk_rfc(input_file):
@@ -267,6 +271,7 @@ def train_sk_rfc(input_file):
     documents = []
     for caption in range(0, len(df)):
         document = str(df[caption])
+        # document = pre_proc_text(document)
         documents.append(document)
     # print(df)
     # Convert to numbers with bag of words
@@ -301,7 +306,7 @@ def train_sk_rfc(input_file):
 
     print(str(time() - start))
 
-    pickle.dump(vectorizer, open("vectorizer.pickle", "wb"))
+    pickle.dump(vectorizer, open("vectorizer2020.pickle", "wb"))
     print(str(time() - start))
 
     from sklearn.model_selection import train_test_split
@@ -312,7 +317,6 @@ def train_sk_rfc(input_file):
     train_results = []
     test_results = []
 
-    # for max in max_features:
     classifier = rfc(
         max_features=45, n_jobs=-1, 
         bootstrap=False, n_estimators=32, 
@@ -321,26 +325,25 @@ def train_sk_rfc(input_file):
 
     train_pred = classifier.predict(X_train)
 
-        # y_pred = classifier.predict(X_test)
+    # y_pred = classifier.predict(X_test)
         # fpr, tpr, thresholds = roc_curve(y_train, train_pred)
         # roc_auc = auc(fpr, tpr)
         # train_results.append(roc_auc)
-
-    y_pred = classifier.predict(X_test)
-
         # fpr, tpr, thresholds = roc_curve(y_test, y_pred)
         # roc_auc = auc(fpr, tpr)
         # test_results.append(roc_auc)
 
+    y_pred = classifier.predict(X_test)
+
     # from matplotlib.legend_handler import HandlerLine2D
-    # import matplotlib as mpl
-    # import matplotlib.pyplot as plt
-    # line1, = plt.plot(max_features, train_results, 'b', label='Train AUC')
-    # line2, = plt.plot(max_features, test_results, 'r', label='Test AUC')
-    # plt.legend(handler_map={line1: HandlerLine2D(numpoints=2)})
-    # plt.ylabel("AUC score")
-    # plt.xlabel("min samples leaf")
-    # plt.show()
+        # import matplotlib as mpl
+        # import matplotlib.pyplot as plt
+        # line1, = plt.plot(max_features, train_results, 'b', label='Train AUC')
+        # line2, = plt.plot(max_features, test_results, 'r', label='Test AUC')
+        # plt.legend(handler_map={line1: HandlerLine2D(numpoints=2)})
+        # plt.ylabel("AUC score")
+        # plt.xlabel("min samples leaf")
+        # plt.show()
 
     print(str(time() - start))
     
@@ -351,8 +354,9 @@ def train_sk_rfc(input_file):
     # print('Mean Squared Error: ', mean_squared_error(y_test, y_pred))
     # print('Root Mean Squared Error: ', np.sqrt(mean_squared_error(y_test, y_pred)))
     # cross_validate(X_train, y_train, classifier)
-    with open("text_classifier", "wb") as picklefile:
+    with open("text_classifier2020", "wb") as picklefile:
         pickle.dump(classifier, picklefile)
+        
     return classifier
 
 
@@ -419,7 +423,8 @@ def predict_and_merge(input_file, output_file, sess):
 
 
 def predict(text, onx):
-    vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
+    # vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
+    vectorizer = pickle.load(open("vectorizer2020.pickle", "rb"))
     # vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
     # stop_words = get_stop_words('english')
 
@@ -445,30 +450,30 @@ def predict(text, onx):
     # print(str(prediction))
 
 
-def predict_tf_keras(text, onx):
-    from keras.preprocessing.sequence import pad_sequences
+# def predict_tf_keras(text, onx):
+    #     from keras.preprocessing.sequence import pad_sequences
 
-    tokenizer = pickle.load(open("/root/dev/projects/scrape/tokenizer.pickle", "rb"))
-    model = pickle.load(open("tf_kerasmodel.pickle", "rb"))
-    
-    input_name = onx.get_inputs()[0].name
-    label_name = onx.get_outputs()[0].name
-    print(input_name)
-    print(label_name)
-    # X = vectorizer.transform(text).toarray()
-    text = pre_proc_text(text)
-    print(text)
-    tokenizer.fit_on_texts(text)
-    X = tokenizer.texts_to_sequences(text)
-    X = pad_sequences(
-        X, padding="post", maxlen=500)
-    pred = model.predict_classes(np.array(X))[0]
-    print(pred)
+    #     tokenizer = pickle.load(open("/root/dev/projects/scrape/tokenizer.pickle", "rb"))
+    #     model = pickle.load(open("tf_kerasmodel.pickle", "rb"))
+        
+    #     input_name = onx.get_inputs()[0].name
+    #     label_name = onx.get_outputs()[0].name
+    #     print(input_name)
+    #     print(label_name)
+    #     # X = vectorizer.transform(text).toarray()
+    #     text = pre_proc_text(text)
+    #     print(text)
+    #     tokenizer.fit_on_texts(text)
+    #     X = tokenizer.texts_to_sequences(text)
+    #     X = pad_sequences(
+    #         X, padding="post", maxlen=500)
+    #     pred = model.predict_classes(np.array(X))[0]
+    #     print(pred)
 
-    # pred_onx = onx.run(
-    #     [label_name], {input_name: np.array(X)})[0]
-    
-    # print(pred_onx)
+    #     # pred_onx = onx.run(
+    #     #     [label_name], {input_name: np.array(X)})[0]
+        
+    #     # print(pred_onx)
 
 
 def cross_validate(X_train, y_train, clf):
@@ -522,16 +527,18 @@ def train_models(input_file, test_file):
 
 # input_file = "ml data - full - balanced.csv"
 # input_file = "mlOutput - testSet.csv"
-input_file = "ml data - full - biased - testSet.csv"
+input_file = "~/mldata/ml data - full - biased - testSet.csv"
 # stopwords = stopwords.words('english')
 
-# input_file = "training_captions.csv"
 classifier = train_sk_rfc(input_file)
-# save_to_onnx(classifier, "unbalanced_tf1.1.onnx")
-    # train_models(input_file, test_file)
+save_sklearn_to_onnx(classifier, "testclf72020.onnx")
+# train_models(input_file, test_file)
 
+sess = load_model_onnx("testclf72020.onnx")
 # sess = load_model_onnx("model.onnx")
-sess = load_model_onnx('/root/dev/projects/scrape/tom/unbalanced4.6.onnx')
+
+# sess = load_model_onnx('~/mldata/unbalanced4.6.onnx')
+
 # output_file = "unbalanced4.6_result1.csv"
 # predict_and_merge(test_file, output_file, sess)
 
@@ -539,11 +546,11 @@ sess = load_model_onnx('/root/dev/projects/scrape/tom/unbalanced4.6.onnx')
 
 sample = "signed and dated 🔥ends when I call it 💎💎Starts at $5 and $5 usd min increments ( no reserve ) 🔥🔥Free shipping in the US ($10 usd to Mexico/ Canada ) 🔥💎please tag the person you outbid 💎failure to pay within 24 hours of winning auction or erasing bids = block 💎 thanks for all the support. Good luck 🍀👍🏻 #rasetglass #glassart #glassauction  #glassofig #glass #glassofig #glassforsale #glassart #glassblowing #glass_of_ig #pendysofig #pendys"
 # sample = 'Custom hand burned Shogun display box!!!💮🏯🎏🎋⛩ NFS #woodburning #colorado #boulder #woodencass #pine #woodwork #wood #japeneses #scarab #shogun #satisfying #woodart #handcarved #japeneseglass #woodworking #woodcarving #workshop #bestofglass #love #pin #katakana #woodcase #case #displaycase #engraving #dremel #woodartist #headyart #japanesestyle #srg2019'
-sample = pre_proc_text(sample)
+# sample = pre_proc_text(sample)
 predict([sample], sess)
 
 # test_file = "testSet.csv"
-# with open(test_file, 'r') as csvfile:
-#     reader = csv.reader(csvfile)
-#     for row in reader:
-#         predict_tf_keras(row[2], sess)
+    # with open(test_file, 'r') as csvfile:
+    #     reader = csv.reader(csvfile)
+    #     for row in reader:
+    #         predict_tf_keras(row[2], sess)

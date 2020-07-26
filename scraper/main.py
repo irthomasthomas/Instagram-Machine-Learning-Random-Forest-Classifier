@@ -21,9 +21,8 @@ def burst():
     burst_scraper.main()
 
 if __name__ == "__main__":
-    print("hello")
     # Process(target=getproxies).start()
-    Process(target=scraper).start()
-    Process(target=cachemaker).start()
-    Process(target=archiver).start()
-    Process(target=burst).start()
+    Process(target=scraper, daemon=True).start()
+    Process(target=cachemaker, daemon=True).start()
+    Process(target=archiver, daemon=True).start()
+    Process(target=burst, daemon=True).start()

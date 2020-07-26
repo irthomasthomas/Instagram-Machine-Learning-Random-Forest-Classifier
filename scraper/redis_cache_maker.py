@@ -61,7 +61,7 @@ def main():
         min_results_to_cache = 5
         tag = r.brpop('cache:queue:ready')[1]
         print(f'cache request: {tag}')
-        p = Process(target=cache, args=(tag,))
+        p = Process(target=cache, args=(tag,), daemon=True)
         p.start()
         # if r.xlen(f'tags:out:{tag}') > min_results_to_cache:
         #     p = Process(target=cache, args=(tag,))
@@ -74,3 +74,6 @@ def main():
         # rb.topkAdd('topk:10requests', tag)
         print(time.strftime('%X %x %Z'))
         
+
+if __name__ == "__main__":
+    main()

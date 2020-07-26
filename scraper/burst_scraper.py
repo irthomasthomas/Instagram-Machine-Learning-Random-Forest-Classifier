@@ -21,14 +21,14 @@ def scrape(second_tag, root_tag, num_to_scrape):
                     duplicate_check=False, related_burst=True):
                 total += count
                 # Trigger cache generator
-                print(f'scraped: {total}')
+                # print(f'scraped: {total}')
                 
                 # added = r.sadd('set:cache:queue', tag)
                 # if added:
                 #     r.lpush('cache:queue:ready', tag)
                 
                 if total > num_to_scrape:
-                    print('FINISHED')
+                    # print('FINISHED')
                     # trigger archive background scraper
                     # scrape_more = r.sadd('set:tags:archive:queue', tag)
                     # print(f'scrape_more: {scrape_more}')
@@ -69,5 +69,9 @@ def main():
         #     continue
         # else:
         #     r.set(key, "True")
-        p = Process(target=scrape, args=(second_tag, root_tag, num_to_scrape))
+        p = Process(target=scrape, args=(second_tag, root_tag, num_to_scrape), daemon=True)
         p.start()
+
+
+if __name__ == "__main__":
+    main()

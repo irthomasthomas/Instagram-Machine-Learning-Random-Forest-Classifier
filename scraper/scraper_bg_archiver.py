@@ -9,7 +9,6 @@ scraper = InstaloaderTommy()
 
 
 def monitor(start, posts):
-    
     print(f'start: {start}')
     end = time.perf_counter()
     timing = end - start
@@ -24,7 +23,6 @@ def monitor(start, posts):
     r.xadd('stats:perf:archive_scrape',
         {"timing": timing, "num_scraped": posts},
         maxlen=5000)
-
 
 def archive_scrape(tag):
     # TODO: TIMING SET START KEY AND END KEY
@@ -72,7 +70,7 @@ def main():
         if r.exists(f'scrape:complete:{tag}'):
             print(f'archiving already complete:{tag}')
             continue
-        p = Process(target=archive_scrape, args=(tag, ))
+        p = Process(target=archive_scrape, args=(tag, ), daemon=True)
         p.start()
 
     # TODO: IF ARCHIVAL SCAN DON'T STOP
@@ -83,3 +81,6 @@ def main():
     # TODO: CREATE AN INDEX TAG > POST
     # TODO: CHECK IF ID EXIST AND STOP SCRAPING
     # TODO: Dump page to redisjson
+
+if __name__ == "__main__":
+    main()

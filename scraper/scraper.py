@@ -43,15 +43,17 @@ def scrape(tag, num_to_scrape):
                     return
         except:
             return
+            
 # TODO: REWRITE IN CRYSTAL
 # CUCKOO FILTER?
 # store every prediction. if exists retrieve prediction else predict.
-# TODO: VARY SCRAPING BY SIZE AND CONTENT OF HASHTAG FEED
+# TODO: VARY SCRAPING BY SIZE AND CONTENT OF HASHTAG FEED...
+# ...Check total posts and predictions
 
 def main():
     while True:
 
-        num_to_scrape = 3800
+        num_to_scrape = 5000
 
         print('MAIN SCRAPER READY! Waiting for a hashtag from redis...')
         # TODO: SUBSCRIBE AND BARK
@@ -61,7 +63,6 @@ def main():
         print(f'SCRAPE REQ: {tag}')
 
         scraped = r.get(f'scraped:recent:{tag}')
-        # print(f'scraped_tag: {scraped}')
         if scraped:
             print(f'FOUND SCRAPED_RECENT KEY')
             print(f'ABORTING')

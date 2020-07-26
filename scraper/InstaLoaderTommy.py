@@ -3,7 +3,7 @@ import pickle
 import random
 import re
 import time
-from multiprocessing import Process
+# from multiprocessing import Process
 from typing import Any, Callable, Dict, Iterator, List, Optional, Tuple, Union
 
 import requests
@@ -155,9 +155,9 @@ class InstaloaderTommy(Instaloader):
     def __init__(self, mode="normal"):
         super().__init__('Instaloader')
         if mode == 'burst':
-            self.context = InstaloaderContextTommy(max_connection_attempts=1)
+            self.context = InstaloaderContextTommy(max_connection_attempts=5)
         else:
-            self.context = InstaloaderContextTommy(max_connection_attempts=10)
+            self.context = InstaloaderContextTommy(max_connection_attempts=80)
         self.download_comments=True
 
 
@@ -341,10 +341,10 @@ class InstaloaderContextTommy(InstaloaderContext):
             quiet: bool = False,
             user_agent: Optional[str] = None,
             max_connection_attempts: int = 3):
-
-        proxy = self.change_proxy()
-        self.proxies = {'https' : proxy}
-        # print(self.proxies)
+        
+        #TODO: CHANGE PROXY
+        # proxy = self.change_proxy()
+        # self.proxies = {'https' : proxy}
 
         self.user_agent = user_agent if user_agent is not None else default_user_agent()
         self._session = self.get_anonymous_session()
@@ -368,12 +368,13 @@ class InstaloaderContextTommy(InstaloaderContext):
 
     def change_proxy(self):
         '''Delete proxy and get new proxy'''
-        proxy = rdb.zpopmin('proxies:')[0]        
+        proxy = rdb.zpopmin('proxies:')[0]   
+        print(f'Changed to proxy: {proxy}')     
         return proxy[0]
 
 
     def get_json(self, path: str, params: Dict[str, Any], host: str = 'www.instagram.com',
-                 session: Optional[requests.Session] = None, _attempt=1) -> Dict[str, Any]:
+                 session: Optional[requests.Session] = None, _attempt=1, use_proxy=False) -> Dict[str, Any]:
         """JSON request to Instagram.
 
         :param path: URL, relative to the given domain which defaults to www.instagram.com/
@@ -388,33 +389,45 @@ class InstaloaderContextTommy(InstaloaderContext):
         is_graphql_query = 'query_hash' in params and 'graphql/query' in path
         # is_iphone_query = host == 'i.instagram.com'
         sess = session if session else self._session
-        proxy = self.change_proxy()
-        proxies = {"https" : proxy}
         # for attempt_no in range(30):
         #     print(f'attempt: {attempt_no}')
         try:
             conn_start = time.perf_counter()
-            resp = sess.get(
-                f'https://{host}/{path}',
-                proxies=proxies,
-                params=params,
-                allow_redirects=False,
-                timeout=3)
+            if use_proxy:
+                proxy = self.change_proxy()
+                proxies = {"https" : proxy}
+                print(f'Trying {host}/{path} on proxy {proxy}')
+                resp = sess.get(
+                    f'https://{host}/{path}',
+                    proxies=proxies,
+                    params=params,
+                    allow_redirects=False,
+                    timeout=4)
+            else:
+                print(f'Trying {host}/{path} no proxy')
+                resp = sess.get(
+                    f'https://{host}/{path}',
+                    params=params,
+                    allow_redirects=False,
+                    timeout=4)
 
-            while resp.is_redirect:
-                print("redirect")
-                redirect_url = resp.headers['location']
-                if redirect_url.startswith(f'https://{host}/'):
-                    resp = sess.get(redirect_url if redirect_url.endswith('/') else redirect_url + '/',
-                                    proxies=proxies, params=params, allow_redirects=False, timeout=3)
-                else:
-                    break
+            # print(f'Status code: {resp.status_code}')
+            # while resp.is_redirect:
+                #     redirect_url = resp.headers['location']
+                #     print(f"redirected from {host}/{path} to: {redirect_url}")
+                #     print(f"proxy: {proxies}")
+                #     proxy = self.change_proxy()
+                #     proxies = {"https" : proxy}
+
+                #     if redirect_url.startswith(f'https://{host}/'):
+                #         resp = sess.get(redirect_url if redirect_url.endswith('/') else redirect_url + '/',
+                #                         proxies=proxies, params=params, allow_redirects=False, timeout=3)
+                #     else:
+                #         break
+
             conn_end = time.perf_counter()
             conn_time = conn_end - conn_start
-            # print(f'conn_time: {conn_time}')
-            # print(f'ADD {proxy}:{conn_time}')
-            # TODO: Done: SET PROXY SCORE REDIS
-                # if resp.status_code == 400:
+            # if resp.status_code == 400:
                 #     print("error 400")
                 # if resp.status_code == 404:
                 #     print("error 404")
@@ -425,12 +438,16 @@ class InstaloaderContextTommy(InstaloaderContext):
                 #     proxies = {"https" : proxy}
                 #     continue
             if resp.status_code != 200:
-                print(f'status code: {str(resp.status_code)} proxy:{proxies}')
-                proxy = self.change_proxy()
-                proxies = {"https" : proxy}
-            else:                
-                rdb.zadd('proxies:', {proxy: conn_time})
+                if use_proxy: print(f'status code: {str(resp.status_code)} proxy:{proxies}')
+                else: 
+                    print(f'status code: {str(resp.status_code)} - No Proxy')
+                    if resp.status_code == 429:
+                        use_proxy = True
 
+            else:               
+                if use_proxy: 
+                    rdb.zadd('proxies:', {proxy: conn_time})
+                ##################################
 
             is_html_query = not is_graphql_query and not "__a" in params and host == "www.instagram.com"
             if is_html_query:
@@ -438,38 +455,36 @@ class InstaloaderContextTommy(InstaloaderContext):
                 match = re.search(r'window\._sharedData = (.*);</script>', resp.text)
                 if match is None:
                     print('match is None')
-                    proxy = self.change_proxy()
-                    proxies = {"https" : proxy}
                     return self.get_json(
                     path=path, params=params, host=host,
-                    session=sess, _attempt=_attempt + 1)
+                    session=sess, _attempt=_attempt + 1, use_proxy=use_proxy)
                 return json.loads(match.group(1))
             else:
+                print('resp.json()')
                 resp_json = resp.json()
+            
             if 'status' in resp_json and resp_json['status'] != "ok":
                 print(f'error: attempt_no {_attempt}')
-                print(f'_attempt: {_attempt} PROXY: {proxies}')
-                proxy = self.change_proxy()
-                proxies = {"https" : proxy}
+                # print(f'attempt: {_attempt} PROXY: {proxies}')
                 # continue
                 return self.get_json(
                     path=path, params=params, host=host,
-                    session=sess, _attempt=_attempt + 1)
+                    session=sess, _attempt=_attempt + 1, use_proxy=use_proxy)
 
             return resp_json
         
-        except KeyboardInterrupt as err:
-            error_string = f'JSON Query to {path}: {err}'
-            self.error("[skipped by user]", repeat_at_end=False)
-            raise ConnectionException(error_string) from err
+        # except KeyboardInterrupt as err:
+        #     error_string = f'JSON Query to {path}: {err}'
+        #     self.error("[skipped by user]", repeat_at_end=False)
+        #     raise ConnectionException(error_string) from err
         except Exception as e:
             print(f'EXCEPTION: {e}')
             error_string = "JSON Query to {}: {}".format(path, e)
             if _attempt == self.max_connection_attempts:
-                raise ConnectionException(error_string) from err
-            print(f'error: attemp: {_attempt}')
-            proxy = self.change_proxy()
-            proxies = {"https" : proxy}
+                raise ConnectionException(error_string) from e
+            print(f'error: attempt: {_attempt}')
+            # proxy = self.change_proxy()
+            # proxies = {"https" : proxy}
             return self.get_json(
                     path=path, params=params, host=host,
                     session=sess, _attempt=_attempt + 1)
@@ -477,20 +492,20 @@ class InstaloaderContextTommy(InstaloaderContext):
         #     raise err
 
         # except (ConnectionException, json.decoder.JSONDecodeError, requests.exceptions.RequestException) as err:           
-        #     error_string = f'JSON Query to {path}: {err}'
-        #     if _attempt == self.max_connection_attempts:
-        #         print(f'_attempt {_attempt} attempt_no: {attempt_no} max_connection_attempts {self.max_connection_attempts}')
-        #         proxies = self.change_proxy(self.proxy)
-        #     self.error(error_string + " [retrying; skip with ^C]", repeat_at_end=False)
-        #     try:
-        #         if is_graphql_query and isinstance(err, TooManyRequestsException):
-        #             self._ratecontrol_graphql_query(params['query_hash'], untracked_queries=True)
-        #         # if is_iphone_query and isinstance(err, TooManyRequestsException):
-        #             # self._ratecontrol_graphql_query('iphone', untracked_queries=True)
-        #         return self.get_json(path=path, params=params, host=host, session=sess, _attempt=_attempt + 1)
-            # except KeyboardInterrupt:
-            #     self.error("[skipped by user]", repeat_at_end=False)
-            #     raise ConnectionException(error_string) from err
+            #     error_string = f'JSON Query to {path}: {err}'
+            #     if _attempt == self.max_connection_attempts:
+            #         print(f'_attempt {_attempt} attempt_no: {attempt_no} max_connection_attempts {self.max_connection_attempts}')
+            #         proxies = self.change_proxy(self.proxy)
+            #     self.error(error_string + " [retrying; skip with ^C]", repeat_at_end=False)
+            #     try:
+            #         if is_graphql_query and isinstance(err, TooManyRequestsException):
+            #             self._ratecontrol_graphql_query(params['query_hash'], untracked_queries=True)
+            #         # if is_iphone_query and isinstance(err, TooManyRequestsException):
+            #             # self._ratecontrol_graphql_query('iphone', untracked_queries=True)
+            #         return self.get_json(path=path, params=params, host=host, session=sess, _attempt=_attempt + 1)
+                # except KeyboardInterrupt:
+                #     self.error("[skipped by user]", repeat_at_end=False)
+                #     raise ConnectionException(error_string) from err
 
 
 class TPost(Post):
