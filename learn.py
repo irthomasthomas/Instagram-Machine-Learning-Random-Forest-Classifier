@@ -271,7 +271,7 @@ def train_sk_rfc(input_file):
     documents = []
     for caption in range(0, len(df)):
         document = str(df[caption])
-        # document = pre_proc_text(document)
+        document = pre_proc_text(document)
         documents.append(document)
     # print(df)
     # Convert to numbers with bag of words
@@ -306,7 +306,7 @@ def train_sk_rfc(input_file):
 
     print(str(time() - start))
 
-    pickle.dump(vectorizer, open("vectorizer2020.pickle", "wb"))
+    pickle.dump(vectorizer, open("vectorizer2020-learnpy.pickle", "wb"))
     print(str(time() - start))
 
     from sklearn.model_selection import train_test_split
@@ -354,7 +354,7 @@ def train_sk_rfc(input_file):
     # print('Mean Squared Error: ', mean_squared_error(y_test, y_pred))
     # print('Root Mean Squared Error: ', np.sqrt(mean_squared_error(y_test, y_pred)))
     # cross_validate(X_train, y_train, classifier)
-    with open("text_classifier2020", "wb") as picklefile:
+    with open("testclf72020-learnpy", "wb") as picklefile:
         pickle.dump(classifier, picklefile)
         
     return classifier
@@ -389,7 +389,7 @@ def predict_and_merge(input_file, output_file, sess):
         document = str(df[caption])
         test_documents.append(document)
 
-    vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
+    vectorizer = pickle.load(open("vectorizer2020-learnpy.pickle", "rb"))
 
     X = vectorizer.transform(test_documents).toarray()
 
@@ -424,7 +424,7 @@ def predict_and_merge(input_file, output_file, sess):
 
 def predict(text, onx):
     # vectorizer = pickle.load(open("/etc/tommy/vectorizer.pickle", "rb"))
-    vectorizer = pickle.load(open("vectorizer2020.pickle", "rb"))
+    vectorizer = pickle.load(open("vectorizer2020-learnpy.pickle", "rb"))
     # vectorizer = pickle.load(open("vectorizer.pickle", "rb"))
     # stop_words = get_stop_words('english')
 
@@ -523,6 +523,8 @@ def train_models(input_file, test_file):
     print("LSVC Accuracy :", accuracy_score(y2, y2_LSVC_model))
 
 
+
+
 # take command of your life. cultivate self discipline.
 
 # input_file = "ml data - full - balanced.csv"
@@ -531,10 +533,10 @@ input_file = "~/mldata/ml data - full - biased - testSet.csv"
 # stopwords = stopwords.words('english')
 
 classifier = train_sk_rfc(input_file)
-save_sklearn_to_onnx(classifier, "testclf72020.onnx")
+save_sklearn_to_onnx(classifier, "testclf72020-learnpy.onnx")
 # train_models(input_file, test_file)
 
-sess = load_model_onnx("testclf72020.onnx")
+sess = load_model_onnx("testclf72020-learnpy.onnx")
 # sess = load_model_onnx("model.onnx")
 
 # sess = load_model_onnx('~/mldata/unbalanced4.6.onnx')
@@ -546,8 +548,12 @@ sess = load_model_onnx("testclf72020.onnx")
 
 sample = "signed and dated 🔥ends when I call it 💎💎Starts at $5 and $5 usd min increments ( no reserve ) 🔥🔥Free shipping in the US ($10 usd to Mexico/ Canada ) 🔥💎please tag the person you outbid 💎failure to pay within 24 hours of winning auction or erasing bids = block 💎 thanks for all the support. Good luck 🍀👍🏻 #rasetglass #glassart #glassauction  #glassofig #glass #glassofig #glassforsale #glassart #glassblowing #glass_of_ig #pendysofig #pendys"
 # sample = 'Custom hand burned Shogun display box!!!💮🏯🎏🎋⛩ NFS #woodburning #colorado #boulder #woodencass #pine #woodwork #wood #japeneses #scarab #shogun #satisfying #woodart #handcarved #japeneseglass #woodworking #woodcarving #workshop #bestofglass #love #pin #katakana #woodcase #case #displaycase #engraving #dremel #woodartist #headyart #japanesestyle #srg2019'
-# sample = pre_proc_text(sample)
-predict([sample], sess)
+sample = pre_proc_text(sample)
+print(f"sample: {type(sample)}")
+sample = [sample]
+print(f"sample: {type(sample)}")
+print(sample)
+predict(sample, sess)
 
 # test_file = "testSet.csv"
     # with open(test_file, 'r') as csvfile:

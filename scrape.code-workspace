@@ -13,5 +13,18 @@
 			"path": "/root/rope"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.exclude": {
+			"**/__pycache__": true,
+			"**/.env": true,
+			"**/.vscode": true,
+			"**/env": true
+		},
+		"search.exclude": {
+			"**/.env": true,
+			"**/.git": true,
+			"**/.vscode": true,
+			"**/env": true
+		}
+	}
 }

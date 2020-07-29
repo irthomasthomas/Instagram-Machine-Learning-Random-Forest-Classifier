@@ -6,6 +6,7 @@ import pickle
 import csv
 import re
 import string
+import time
 
 # from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -19,10 +20,17 @@ from sklearn.metrics import roc_curve, auc
 from stop_words import get_stop_words
 import unidecode
 
+# TODO: IDEA FOR APP SPLIT SCREEN SEARCH: OPEN DDG AND G SIDE-BY-SIDE
+
 
 def get_num_words_per_sample(sample_texts):
     num_words = [len(s.split()) for s in sample_texts]
     return np.median(num_words)
+
+
+def remove_stopwords(text, stopword):
+    text = [word for word in text if word not in stopword]
+    return text
 
 
 def pre_proc_text(caption):
@@ -60,62 +68,46 @@ def pre_proc_text(caption):
     def tokenize(text):
         text = re.split('\W+', text)
         return text
-    
-    def remove_stopwords(text, stopword):
-        text = [word for word in text if word not in stopword]
-        return text
 
-    stop_words = get_stop_words('english')
-    # stop_words = stopwords.words('english')
     caption, tags = extract_hashtags(caption)
     caption, mentions = extract_mentions(caption)
     caption = remove_punct(caption)
-    # caption = remove_accents(caption)
+    caption = remove_accents(caption)
     caption = tokenize(caption)
-    caption = remove_stopwords(caption, stop_words)
-
-    caption = ' '.join(caption)
-    caption = caption.rstrip()
-    
     # return [post[0], post[1], caption]
     return caption
 
-def train_sk_rfc(input_file):
 
-    df = pd.read_csv(input_file, header=None)
-    df.columns = ["data", "target"]
+def train_sk_rfc(input_file, stop_words):
+    df = pd.read_csv(input_file, header=1)
+    # output_file = "output2.csv" # 55k rows/4744 tagged id| og_caption| mod_caption| target
+    df.columns = ["id", "og_caption", "mod_caption", "target"]
 
-    df, y = df.data, df.target
+    df, y = df.og_caption, df.target
 
     documents = []
     for caption in range(0, len(df)):
         document = str(df[caption])
-        # document = pre_proc_text(document)
+        document = pre_proc_text(document)
+        document = remove_stopwords(document, stop_words)
+        document = ' '.join(document)
+        document = document.rstrip()
         documents.append(document)
     # print(df)
     # Convert to numbers with bag of words
-    
 
-    start = time()
-    stop_words = get_stop_words('english')
-    
     vectorizer = TfidfVectorizer(
         max_features=80, stop_words=stop_words)
-    print(str(time() - start))
-
     # vectorizer user warning stop_words inconsistent with preprocessing
     X = vectorizer.fit_transform(documents).toarray()
-
     print("SHAPE")
     print(X.shape)
 
-    print(str(time() - start))
-
     pickle.dump(vectorizer, open("vectorizer2020.pickle", "wb"))
-    print(str(time() - start))
 
     from sklearn.model_selection import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.15, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.15, random_state=0)
 
     from sklearn.ensemble import RandomForestClassifier as rfc
     
@@ -132,7 +124,6 @@ def train_sk_rfc(input_file):
 
     y_pred = classifier.predict(X_test)
 
-    print(str(time() - start))
     
     print(confusion_matrix(y_test, y_pred))
     print(classification_report(y_test, y_pred))
@@ -164,7 +155,6 @@ def load_model_onnx(model_file):
 
 
 def predict_and_merge(input_file, output_file, sess):
-    start = time()
 
     df = pd.read_csv(input_file, header=None)
     df.columns = ["data", "target"]
@@ -185,7 +175,6 @@ def predict_and_merge(input_file, output_file, sess):
     pred_onx = sess.run(
         [label_name], {input_name: X.astype(np.float32)})[0]
     print(str(pred_onx))
-    print(str(time() - start))
 
     with open("text_classifier", "rb") as training_model:
         model = pickle.load(training_model)
@@ -206,7 +195,6 @@ def predict_and_merge(input_file, output_file, sess):
     pred_df['onnx'] = pred_onx
 
     pred_df.to_csv(output_file, header=True)
-    print(str(time() - start))
 
 
 def predict(text, onx):
@@ -222,19 +210,16 @@ def predict(text, onx):
     label_name = onx.get_outputs()[0].name
     print(input_name)
     print(label_name)
-    # input = [text,]
+    # ERRORS HERE    
     X = vectorizer.transform(text).toarray()
-   
     pred_onx = onx.run(
         [label_name], {input_name: X.astype(np.float32)})[0]
     print(pred_onx)
-   
-    
     # with open("text_classifier", "rb") as training_model:
-    #     model = pickle.load(training_model)
-
+    # # #     model = pickle.load(training_model)
     # prediction = model.predict(X)
     # print(str(prediction))
+
 
 def cross_validate(X_train, y_train, clf):
     from sklearn.model_selection import cross_val_score
@@ -284,32 +269,53 @@ def train_models(input_file, test_file):
 
 
 # take command of your life. cultivate self discipline.
-
-# input_file = "ml data - full - balanced.csv"
-# input_file = "mlOutput - testSet.csv"
-input_file = "~/mldata/ml data - full - biased - testSet.csv"
-# stopwords = stopwords.words('english')
-
-classifier = train_sk_rfc(input_file)
+    # output_file = "output2.csv" # 55k rows/4744 tagged id| og_caption| mod_caption| target
+    # output 55k id | og_caption | mod_caption 
+        # output1 55k id	og_caption	mod_caption	target 2061 1s 21k 2s
+        # output2 55k 4700 1s 27k 0s 
+    # train2.csv # 10k / 4828 mod_caption | target 
+    # jk A data scientist is travelling on a train at 100 mph 
+    # input_file = "ml data - full - balanced.csv"  # 7000 rows cleaned and cat  
+    # input_file = "mlOutput - testSet.csv" # 700 rows cleaned and categorised
+    # input_file = "~/mldata/ml data - full - biased - testSet.csv" # 1000 rows cleaned and cat
+input_file = "~/mldata/training_captions.csv"
+stop_words = get_stop_words('english')
+print(type(stop_words))
+print(stop_words)
+new_stop_words = []
+for word in stop_words:
+    new_stop_words.append(pre_proc_text(word)[0])
+stop_words = new_stop_words
+new_stop_words = 0
+print(type(stop_words))
+print(stop_words)
+classifier = train_sk_rfc(input_file, stop_words)
 save_sklearn_to_onnx(classifier, "testclf72020.onnx")
 # train_models(input_file, test_file)
-
 sess = load_model_onnx("testclf72020.onnx")
 # sess = load_model_onnx("model.onnx")
 
 # sess = load_model_onnx('~/mldata/unbalanced4.6.onnx')
-
-# output_file = "unbalanced4.6_result1.csv"
+timestr = time.strftime("%Y%m%d-%H%M%S")
+output_file = f"mlout{timestr}.csv"
+# test_file = "ml data - full - biased - testSet1.csv" # 10 rows cleaned
 # predict_and_merge(test_file, output_file, sess)
 
-# test_file = "ml data - full - biased - testSet1.csv"
 
 sample = "signed and dated 🔥ends when I call it 💎💎Starts at $5 and $5 usd min increments ( no reserve ) 🔥🔥Free shipping in the US ($10 usd to Mexico/ Canada ) 🔥💎please tag the person you outbid 💎failure to pay within 24 hours of winning auction or erasing bids = block 💎 thanks for all the support. Good luck 🍀👍🏻 #rasetglass #glassart #glassauction  #glassofig #glass #glassofig #glassforsale #glassart #glassblowing #glass_of_ig #pendysofig #pendys"
-# sample = 'Custom hand burned Shogun display box!!!💮🏯🎏🎋⛩ NFS #woodburning #colorado #boulder #woodencass #pine #woodwork #wood #japeneses #scarab #shogun #satisfying #woodart #handcarved #japeneseglass #woodworking #woodcarving #workshop #bestofglass #love #pin #katakana #woodcase #case #displaycase #engraving #dremel #woodartist #headyart #japanesestyle #srg2019'
-# sample = pre_proc_text(sample)
-predict([sample], sess)
+sample2 = 'Custom hand burned Shogun display box!!!💮🏯🎏🎋⛩ NFS #woodburning #colorado #boulder #woodencass #pine #woodwork #wood #japeneses #scarab #shogun #satisfying #woodart #handcarved #japeneseglass #woodworking #woodcarving #workshop #bestofglass #love #pin #katakana #woodcase #case #displaycase #engraving #dremel #woodartist #headyart #japanesestyle #srg2019'
+sample = pre_proc_text(sample)
+print(f"sample: {type(sample)}")
+sample = remove_stopwords(sample, stop_words)
+sample = ' '.join(sample)
+sample = sample.rstrip()
+print(f"sample: {type(sample)}")
+print(sample)
+sample = [sample]
+print(sample)
+predict(sample, sess)
 
-# test_file = "testSet.csv"
+# test_file = "testSet.csv" # 1000 rows : full cap | mod caption | category 150 1s, 750 0s
     # with open(test_file, 'r') as csvfile:
     #     reader = csv.reader(csvfile)
     #     for row in reader:

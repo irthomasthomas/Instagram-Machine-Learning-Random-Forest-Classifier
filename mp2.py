@@ -3,7 +3,6 @@ from nltk.corpus import stopwords
 import re
 import os
 import string
-import time
 from multiprocessing.dummy import Pool as ThreadPool 
 import pandas as pd
 
@@ -57,12 +56,12 @@ def pre_proc_text(post):
     return [post[0], post[1], caption]
 
 
-start = time.time()
-pages = []
 list2 = []
 
 
-
+# scans each folder in path for instagram files 
+# and adds each 
+#  id and caption to list2
 path = "/root/dev/scrapeimport"
 stopwords = stopwords.words('english')
 dirs = []
@@ -80,39 +79,35 @@ for dir in os.scandir(path):
                 except:
                     caption = ""
                 list2.append([id, caption])
-    
-
 print(len(list2))
-print(time.time() - start)
 
-start = time.time()
-
+## process list2 caption text and add to captions list
 from multiprocessing import Process, Manager, Pool
-
 captions = []
 pool = Pool(3)
 captions = [x for x in pool.map(pre_proc_text, list2) if x is not None]
 print(len(captions))
-print(time.time() - start)
-start = time.time()
-output_file = "output2.csv"
+##
+
+### Make a df of csv file of og and mod captions
 df1 = pd.DataFrame(captions, columns=["id", "og_caption", "mod_caption"])
-df2 = pd.read_csv(
-    "/root/dev/projects/scrape/data/mlbiased.csv", header=None)
-df2.columns = ["mod_caption", "target"]
 df1.id = df1.id.str.strip()
 df1.og_caption = df1.og_caption.str.strip()
 df1.mod_caption = df1.mod_caption.str.strip()
 df1.mod_caption = df1.mod_caption.astype(str)
 # df1.mod_caption = df1.mod_caption.str.encode("utf-8")
 
+# make 2nd df of mlbiased data
+df2 = pd.read_csv(
+    "/root/dev/projects/scrape/data/mlbiased.csv", header=None)  # 20k cleaned and tagged / 3k 1s
+df2.columns = ["mod_caption", "target"]
 df2.mod_caption = df2.mod_caption.astype(str)
 df2.mod_caption = df2.mod_caption.str.strip()
 df2.target = df2.target.astype(str)
-
-
+# TODO: df2.ods
+# merge df 1 & 2
+output_file = "output2.csv"  # 55k rows/4k tagged 1s id| og_caption| mod_caption| target 
 df3 = pd.merge(df1, df2, how="left", on="mod_caption") 
-
+# save df3 to csv
 df3.to_csv(output_file, header=True)
 
-print(time.time() - start)
