@@ -248,7 +248,7 @@ new_stop_words = 0
 time01 = time.time()
 print(f"time01: {time01 - time0}") # 0.019
 
-input_file = "~/mldata/training_captions.csv"
+input_file = "../mldata/training_captions.csv"
 classifier = train_sk_rfc(input_file, stop_words)
 
 time02 = time.time()
@@ -267,7 +267,7 @@ output_file = f"mlout{timestr}.csv"
 time1 = time.time()
 print(f"time1: {time1 - time02}")
 # test_file = "ml data - full - biased - testSet1.csv" # 10 rows cleaned
-test_file = "~/mldata/testSet.csv"  # 1000 rows : MOD_CAP | TRAIN/category FULL_CAP | 150 1s, 750 0s
+test_file = "../mldata/testSet.csv"  # 1000 rows : MOD_CAP | TRAIN/category FULL_CAP | 150 1s, 750 0s
 
 time11 = time.time()
 print(f"time11: {time11 - time1}")

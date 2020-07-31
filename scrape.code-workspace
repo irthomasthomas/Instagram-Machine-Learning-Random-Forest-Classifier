@@ -16,6 +16,10 @@
 			"**/.git": true,
 			"**/.vscode": true,
 			"**/env": true
+		},
+		"files.watcherExclude": {
+			"**/.env": true,
+			"**/env": true
 		}
 	}
 }
