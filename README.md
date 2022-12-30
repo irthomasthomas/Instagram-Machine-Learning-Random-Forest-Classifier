@@ -11,7 +11,7 @@ SciKit
 Svelte JS
 etc
 
-RedisBloom and various probabilistic data-structures where used to facilitate a public web interface. The probabilistic data-structures allowed me to run a fully-functional public demo on a single small VM in a deterministic manner.
+RedisBloom and various probabilistic data-structures where used to support a public web interface. The probabilistic data-structures allowed me to run a fully-functional public demo on a single small VM in a deterministic manner.
 
 Briefly, the program consists of:
   Scraping instagram posts from hashtags related selling.
