@@ -25,11 +25,11 @@ Briefly, the program consists of:
   - Converting the RFC to matrix
   - Deploying model to redis.
 
-A simple webpage written in Svelte that:
-  Takes a search term 
-  Scrapes instagram
-  Depupe using filters
-  Classify unique posts
-  Present discovered items in a grid.
-  Website keeps track of topk results on frontpage
+A simple webpage written in Svelte and a python webserver that:
+  - Takes a search term
+  - Scrapes instagram
+  - Depupe using filters
+  - Classify unique posts
+  - Present discovered items in a grid.
+  - Website keeps track of topk results on frontpage
 
