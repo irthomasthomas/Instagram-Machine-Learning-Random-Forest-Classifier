@@ -16,7 +16,8 @@ RedisBloom and various probabilistic data-structures where used to support a pub
 Briefly, the program consists of:
   - Scraping instagram posts from hashtags related selling.  
   - Manually tagging posts as relevant or not.
-  - Passing the post text through a text processing pipeline in python running on RedisGears:
+  
+  - Passing the post text through a pre-processing pipeline in python running on RedisGears:
   * Cleaning
   * Tokenizing
   * etc
