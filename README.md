@@ -14,12 +14,19 @@ etc
 RedisBloom and various probabilistic data-structures where used to support a public web interface. The probabilistic data-structures allowed me to run a fully-functional public demo on a single small VM in a deterministic manner.
 
 Briefly, the program consists of:
+
   Scraping instagram posts from hashtags related selling.
+  
   Manually tagging posts as relevant or not.
+  
   Passing the post text through a text processing pipeline in python running on RedisGears:
+  
    Cleaning
+   
    Tokenizing
+   
    etc
+   
   Training a Random-Forest-Classifier on the cleaned text.
   Converting the RFC to matrix
   Deploying model to redis.
